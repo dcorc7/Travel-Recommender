@@ -1,0 +1,22 @@
+{
+    "off-the-beaten-path-blog-posts": [
+        {
+            "PutRequest": {
+                "Item": {
+                    "postId": {"S": "test1"},
+                    "title": {"S": "Test Post 1"},
+                    "content": {"S": "This is a test post."}
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "postId": {"S": "test2"},
+                    "title": {"S": "Test Post 2"},
+                    "content": {"S": "Another test post."}
+                }
+            }
+        }
+    ]
+}
