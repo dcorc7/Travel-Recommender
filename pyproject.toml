@@ -3,16 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "anythings-pawsible"
+name = "off-the-beaten-path"
 version = "1.0.0"
-description = "ML-powered dog dating application with FastAPI, Streamlit, and advanced matching algorithms"
+description = "ML-powered Travel Recommendation tool"
 authors = [
-    {name = "Trevor Adriaanse", email = "tva7@georgetown.edu"},
+    {name = "Group 1"},
 ]
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
-keywords = ["mlops", "machine-learning", "dog-dating", "recommendation-system", "faiss", "bloom-filter", "fastapi", "streamlit"]
+keywords = ["mlops", "machine-learning", "travel", "recommendation-system", "faiss", "fastapi", "streamlit"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Education",
@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-# Core dependencies for dog dating ML pipeline
+# Core dependencies for travel recomendation
 dependencies = [
     # Data processing & analysis
     "pandas>=1.5.3",
@@ -82,21 +82,21 @@ dev = [
 ]
 
 # All dependencies combined
-all = [
-    "anythings-pawsible[api,frontend,dev]",
-]
+#all = [
+#    "anythings-pawsible[api,frontend,dev]",
+#]
 
 [project.urls]
-Homepage = "https://github.com/trevoradriaanse/anythings-pawsible"
-Documentation = "https://github.com/trevoradriaanse/anythings-pawsible"
-Repository = "https://github.com/trevoradriaanse/anythings-pawsible"
-Issues = "https://github.com/trevoradriaanse/anythings-pawsible/issues"
+#Homepage = "https://github.com/trevoradriaanse/anythings-pawsible"
+#Documentation = "https://github.com/trevoradriaanse/anythings-pawsible"
+#Repository = "https://github.com/trevoradriaanse/anythings-pawsible"
+#Issues = "https://github.com/trevoradriaanse/anythings-pawsible/issues"
 
 [project.scripts]
 # CLI commands for running different parts of the pipeline
-pawsible-process = "src.data.run_processing:main"
-pawsible-features = "src.features.engineer:main"
-pawsible-train = "src.models.train_model:main"
+# pawsible-process = "src.data.run_processing:main"
+#pawsible-features = "src.features.engineer:main"
+#pawsible-train = "src.models.train_model:main"
 
 [tool.hatch.build.targets.wheel]
 packages = []

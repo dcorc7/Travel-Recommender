@@ -21,7 +21,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: backend/Dockerfile.api
     container_name: lsh_api
     depends_on:
       db:
@@ -47,7 +47,7 @@ services:
   streamlit:
     build:
       context: .
-      dockerfile: streamlit_app/Dockerfile 
+      dockerfile: frontend/streamlit_app/Dockerfile 
     container_name: lsh_streamlit
     depends_on:
       api:
@@ -71,7 +71,7 @@ services:
   tests:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: backend/Dockerfile.api
     depends_on:
       api:
         condition: service_started
