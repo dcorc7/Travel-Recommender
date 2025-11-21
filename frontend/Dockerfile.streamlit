@@ -1,4 +1,4 @@
-# streamlit_app/Dockerfile
+# Streamlit Frontend Dockerfile
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -7,23 +7,27 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     STREAMLIT_BROWSER_GATHERUSAGESTATS=false
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential curl && \
-    rm -rf /var/lib/apt/lists/*
+      build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install deps first for better caching
+# Install dependencies for frontend
 COPY pyproject.toml README.md /app/
 
-# Create empty src/ directory to satisfy pyproject.toml
+# Create dummy src/ directory to satisfy pyproject.toml
 RUN mkdir -p /app/src
 
-# Install dependencies
+# Install Python dependencies including frontend extras
 RUN python -m pip install --upgrade pip wheel \
- && pip install .
+ && pip install ".[frontend]"
 
-# Then bring in the app
+# Copy Streamlit app
 COPY ./frontend/streamlit_app/ /app/streamlit_app/
 
+# Expose port
 EXPOSE 8501
-CMD ["streamlit", "run", "streamlit_app/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+
+# Run Streamlit
+CMD ["streamlit", "run", "./streamlit_app/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+

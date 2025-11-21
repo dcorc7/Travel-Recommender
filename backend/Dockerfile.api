@@ -4,7 +4,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app/src
+    PYTHONPATH="/app/src:/app/off_the_path"
 
 # System deps (curl for healthcheck; libgomp1 for xgboost runtime; build tools optional)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -16,19 +16,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Install dependencies first for better caching
-COPY pyproject.toml /app/
+COPY pyproject.toml  README.md /app/
 
-# Copy backend-specific files (from repo root)
+# Copy backend code
 COPY ./backend/src/ /app/src/
 COPY ./backend/configs/ /app/configs
+COPY ./backend/off_the_path/ /app/off_the_path/
 
-# Copy off_the_beaten_path module
-COPY backend/off_the_path/ /app/off_the_path/
-
-# Ensure Python can find off_the_path module
-ENV PYTHONPATH="/app:${PYTHONPATH}"
-
-# Install uv (pip’s fine here)
+# Install Python dependencies (including backend package)
 RUN python -m pip install --upgrade pip wheel \
  && pip install .
 
@@ -40,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
 # Start server
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

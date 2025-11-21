@@ -16,14 +16,15 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./src:/app/src:rw
+      - ./backend/src:/app/src:rw
+      - ./backend/off_the_path:/app/off_the_path:rw
     command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     restart: unless-stopped
 
   streamlit:
     build:
       context: .
-      dockerfile: ./frontend/streamlit_app/Dockerfile.streamlit
+      dockerfile: ./frontend/Dockerfile.streamlit
     container_name: streamlit
     depends_on:
       api:
@@ -39,8 +40,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./streamlit_app:/app/streamlit_app:rw   # hot-reload Streamlit UI
-      - ./assets:/app/streamlit_app/assets:rw   # only if you actually store assets here
+      - ./frontend/streamlit_app:/app/streamlit_app:rw
     restart: unless-stopped
 
   tests:
