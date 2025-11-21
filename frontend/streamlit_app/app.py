@@ -204,27 +204,72 @@ with tabs[1]:
         st.info("Run a search first to populate the map.")
     else:
         df = pd.DataFrame([
-            {"destination": r["destination"], "country": r.get("country",""), "lat": r.get("lat"), "lon": r.get("lon"),
-             "score": r.get("score"), "confidence": r.get("confidence")}
+                {"destination": r["destination"], 
+                 "country": r.get("country",""), 
+                 "lat": r.get("lat"), 
+                 "lon": r.get("lon"),
+                 "score": r.get("score"), 
+                 "confidence": r.get("confidence")
+            }
+
             for r in results.get("results", [])
             if r.get("lat") is not None and r.get("lon") is not None
         ])
         if df.empty:
             st.info("No coordinates available to plot.")
         else:
+            # Compute min and max scores
+            min_score = df["score"].min()
+            max_score = df["score"].max()
+            score_range = max_score - min_score if max_score != min_score else 1  # avoid division by zero
+
+            # Map score to relative 0-1 scale
+            def relative_score_to_color(score):
+                relative = (score - min_score) / score_range
+                r = int(255 * (1 - relative))
+                g = int(255 * relative)
+                b = 0
+                a = 160
+                return [r, g, b, a]
+
+            df["color"] = df["score"].apply(relative_score_to_color)
+
             layer = pdk.Layer(
                 "ScatterplotLayer",
                 data=df,
                 get_position='[lon, lat]',
-                get_radius=60000,
+                get_radius=25000,
                 pickable=True,
                 radius_scale=1,
                 radius_min_pixels=3,
                 radius_max_pixels=30,
+                get_fill_color="color"
             )
-            vs = pdk.ViewState(latitude=float(df.lat.mean()), longitude=float(df.lon.mean()), zoom=2.5)
-            st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=vs,
-                                     tooltip={"text": "{destination}\n{country}\nscore: {score}\nconf: {confidence}"}))
+            
+            vs = pdk.ViewState(
+                latitude=float(df.lat.mean()), 
+                longitude=float(df.lon.mean()), 
+                zoom=2.5
+            )
+
+            st.pydeck_chart(
+                pdk.Deck(
+                    layers = [layer], 
+                    initial_view_state = vs,       
+                    tooltip = {
+                        "text": "{destination}\n{country}\nscore: {score}\nconf: {confidence}"
+                    }
+                )
+            )
+            
+            # Legend for score colors
+            st.markdown("""
+            <div style='display:flex; align-items:center; gap:10px; margin-top:10px;'>
+                <div style='width:20px; height:20px; background-color:rgb(255,0,0);'></div> Lower score
+                <div style='width:20px; height:20px; background-color:rgb(255,255,0); margin-left:10px;'></div> Medium score
+                <div style='width:20px; height:20px; background-color:rgb(0,255,0); margin-left:10px;'></div> Higher score
+            </div>
+            """, unsafe_allow_html=True)
 
 with tabs[2]:
     if not results:
