@@ -13,12 +13,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Install deps first for better caching
-COPY streamlit_app/requirements.txt /tmp/requirements.txt
-RUN python -m pip install --upgrade pip wheel && \
-    pip install -r /tmp/requirements.txt
+COPY pyproject.toml README.md /app/
+
+# Create empty src/ directory to satisfy pyproject.toml
+RUN mkdir -p /app/src
+
+# Install dependencies
+RUN python -m pip install --upgrade pip wheel \
+ && pip install .
 
 # Then bring in the app
-COPY ./streamlit_app /app/streamlit_app
+COPY ./frontend/streamlit_app/ /app/streamlit_app/
 
 EXPOSE 8501
 CMD ["streamlit", "run", "streamlit_app/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
