@@ -17,8 +17,10 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column,relationships
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
 import os
+import unicodedata
 
 # Load a pre-trained English language model
 nlp = spacy.load("en_core_web_sm")
@@ -39,6 +41,9 @@ def clean_text(text):
     text = text.replace('“', '"').replace('”', '"')
     text = text.replace('‘', "'").replace('’', "'")
     text = text.replace('–', '-').replace('—', '-')
+    text = unicodedata.normalize('NFKC', text)
+    # Replace multiple spaces with single space
+    text = " ".join(text.split())
 
     # remove unwanted characters
     c_text = text.translate(str.maketrans('', '', '()/*\\*><+=~^|#_%\'"'))
@@ -51,20 +56,32 @@ def clean_text(text):
     c_text = c_text.lower()
     c_text = re.sub(r'\s+', ' ', c_text).strip()
 
-    return ' '.join(c_text)
+    return c_text
 
-def serpapi_search(query, api_key):
+def serpapi_search(api_key, start_page = "0"):
+    query = "travel site:wordpress.com"
     params = {
         "api_key": api_key,
         "engine": "google",
         "q": query,
-        "hl": "en"
+        "hl": "en",
+        "start": start_page
     }
     search = GoogleSearch(params)
     results = search.get_dict()
     return results.get('organic_results', [])
 
-query = "travel site:wordpress.com"
+def get_all_blog_urls():
+    page_list = ['10','20','30','40','50','60','70','80','90','100']
+    url_list = []
+
+    for page in page_list:
+        results = serpapi_search(api_key, page)
+        for result in results:
+            url = result['link']
+            url_list.append(url)
+
+    return url_list
 
 def get_wordpress_pages(base_url):
     # init list to store page links
@@ -166,7 +183,7 @@ def get_blog_page_content(page_url):
     soup = BeautifulSoup(response.text, 'html.parser')
 
     paragraphs = soup.find_all('p')
-    all_paras = " ".join(p.get_text(strip=True) for p in paragraphs)
+    all_paras = " ".join(clean_text(p.get_text(strip=True)) for p in paragraphs)
     return all_paras
 
 def get_blog_page_meta_data(page_url):
@@ -205,17 +222,30 @@ def get_blog_page_meta_data(page_url):
     return title, description_content, author_content
 
 def find_geo_name(title, description):
+    def extract_geo(doc):
+        for i, ent in enumerate(doc.ents):
+            if ent.label_ in ["GPE", "LOC"]:
+                # If the entity is already multi-word, return it
+                if len(ent.text.split()) > 1:
+                    return ent.text
+                # Try to combine with next consecutive GPE/LOC
+                if i + 1 < len(doc.ents):
+                    next_ent = doc.ents[i + 1]
+                    if next_ent.start == ent.end and next_ent.label_ in ["GPE", "LOC"]:
+                        return f"{ent.text}, {next_ent.text}"
+                # fallback: single entity
+                return ent.text
+        return None
 
-    doc = nlp(title)
+    # Check title first
+    doc_title = nlp(title)
+    result = extract_geo(doc_title)
+    if result:
+        return result
 
-    for ent in doc.ents:
-        if ent.label_ == "GPE" or ent.label_ == "LOC": # GPE: Geopolitical Entity, LOC: Location
-            return ent
-        else:
-            doc = nlp(description)
-            for ent in doc.ents:
-                if ent.label_ == "GPE" or ent.label_ == "LOC":
-                    return ent
+    # If nothing found, check description
+    doc_desc = nlp(description)
+    return extract_geo(doc_desc)
                 
 def get_lat_long(location_name):
     try:
@@ -281,7 +311,7 @@ def db_connect_whole_blog():
 
     class Whole_Blogs(Base):
 
-        __tablename__ = "blog_posts"
+        __tablename__ = "travel_blogs"
 
         id: Mapped[int] = mapped_column(primary_key=True)
         blog_url: Mapped[str]
@@ -295,7 +325,7 @@ def db_connect_whole_blog():
         content: Mapped[str]
 
         def __repr__(self) -> str:
-            return f"Whole_Blogs(id={self.id!r}, , location_name={self.location_name!r}, page_title={self.page_title!r})"
+            return f"Whole_Blogs(id={self.id!r}, , location_name={self.location_name!r}, page_title={self.page_title!r}"
 
     # This actually creates the table
     Base.metadata.create_all(engine)
@@ -304,10 +334,14 @@ def db_connect_whole_blog():
 
 
 def main():
-    
-    query_urls = ['https://dangerousbusiness.wordpress.com', 'https://ashleighbugg.wordpress.com']
     # Connect SERP API HERE
-
+    query_urls = get_all_blog_urls()
+    # query_urls = ['https://ashleighbugg.wordpress.com']
+    print("Number of Travel Blogs:",len(query_urls))
+    with open("backend/data_collection/query_urls.txt", 'w') as file_object:
+        for item in query_urls:
+            file_object.write(f"{item}\n")
+    
     # init DB engine
     engine, Whole_Blogs = db_connect_whole_blog()
     id = 1
@@ -345,11 +379,16 @@ def main():
                             session.add(new_blog)
                             session.commit()
                             print("Added blog for",place_name)
+                        except IntegrityError:
+                            # Duplicate detected, skip this item
+                            session.rollback()
+                            print(f"Skipping duplicate URL: {'page_url'}")
+                            continue
                         except Exception as e:
                             session.rollback()
                             print("Error:", e)
-                        if id <2:
-                            break
+                    # if id >5:
+                    #     break
                 except:
                     print("Not enough info in",link)
                     continue
