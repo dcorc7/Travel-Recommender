@@ -46,6 +46,7 @@ data/profile_pictures/
 data/raw/*.jpg
 data/raw/*.png
 data/raw/*.jpeg
+data/raw/
 
 # Keep generated CSV data for reproducibility
 !data/raw/*.csv

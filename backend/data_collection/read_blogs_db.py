@@ -10,7 +10,6 @@ import os
 load_dotenv()
 
 database_url = os.getenv("DATABASE_URL")
-api_key = os.getenv("API_KEY")
 
 print(f"Database URL: {database_url}")
 
