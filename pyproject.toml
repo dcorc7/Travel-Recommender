@@ -58,6 +58,9 @@ dependencies = [
     "dotenv (>=0.9.9,<0.10.0)",
     "sqlalchemy (>=2.0.44,<3.0.0)",
     "psycopg2-binary (>=2.9.11,<3.0.0)",
+
+    # BM25 package
+    "rank_bm25>=0.2.1",
 ]
 
 [project.optional-dependencies]
@@ -105,7 +108,7 @@ dev = [
 packages = []
 
 [tool.hatch.build.targets.wheel.force-include]
-"src" = "src"
+"backend/src" = "src"
 
 [tool.black]
 line-length = 88
