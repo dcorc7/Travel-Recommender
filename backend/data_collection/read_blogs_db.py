@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Session
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, select, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column,relationships
 from dotenv import load_dotenv
 import os
@@ -37,9 +37,15 @@ class Whole_Blogs(Base):
         return f"Whole_Blogs(id={self.id!r}, , location_name={self.location_name!r}, page_title={self.page_title!r}"
 
 
+# with Session(engine) as session:
+    # posts = session.query(Whole_Blogs).all()
+    # print(posts)
+
 with Session(engine) as session:
-    posts = session.query(Whole_Blogs).all()
-    print(posts)
-    print("Number of Items:",len(posts))
+    count = session.execute(
+        select(func.count()).select_from(Whole_Blogs)
+    ).scalar_one()
+    print("Number of Items:", count)
+
 
 

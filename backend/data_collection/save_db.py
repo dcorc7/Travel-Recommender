@@ -22,7 +22,7 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Fetch all rows from a table 
-result = session.execute(text("SELECT * FROM travel_blogs")).fetchall()
+result = session.execute(text("SELECT * FROM travel_blogs")).mappings().all()
 data_to_save = [dict(row) for row in result]
 
 # Example: Saving to a JSON file

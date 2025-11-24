@@ -72,7 +72,7 @@ def serpapi_search(api_key, start_page = "0"):
     return results.get('organic_results', [])
 
 def get_all_blog_urls():
-    page_list = ['10','20','30','40','50','60','70','80','90','100']
+    page_list = ['110','120','130','140','150','160','170','180','190','110']
     url_list = []
 
     for page in page_list:
