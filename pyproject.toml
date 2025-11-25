@@ -108,7 +108,7 @@ dev = [
 packages = []
 
 [tool.hatch.build.targets.wheel.force-include]
-"backend/src" = "src"
+"src" = "src"
 
 [tool.black]
 line-length = 88

@@ -8,7 +8,28 @@ from typing import Dict, List, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
+# Import BM25 utilities
+try:
+    from .bm25_utils import search_bm25
+    BM25_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: BM25 not available: {e}")
+    BM25_AVAILABLE = False
+
 app = FastAPI(title="Off-the-Beaten-Path Travel API")
+
+# Add event handler to preload bm25 index data to limit search time
+@app.on_event("startup")
+async def startup_event():
+    """Preload BM25 index on API startup."""
+    if BM25_AVAILABLE:
+        print("Preloading BM25 index...")
+        try:
+            from .bm25_utils import _load_blogs_from_db
+            _load_blogs_from_db()
+            print("✓ BM25 index preloaded and ready!")
+        except Exception as e:
+            print(f"✗ Failed to preload BM25 index: {e}")
 
 # ----------------------------
 # Config / Signals
@@ -207,12 +228,63 @@ def deterministic_trend(name: str, date_range: str) -> float:
     return (val - 0.5) * 0.4  # -0.2..+0.2
 
 
+# BM25 Search Handler
+def bm25_search(req: SearchRequest) -> List[Result]:
+    """Handle BM25 search using the database."""
+    if not BM25_AVAILABLE:
+        # Return empty results if BM25 not available
+        return []
+    
+    # Call the BM25 utility function
+    raw_results = search_bm25(req.query, top_n = req.retrieval.k)
+    
+    results = []
+    for r in raw_results:
+        # Create snippets from content preview and description
+        snippets = []
+        if r.get("description"):
+            snippets.append(r["description"])
+        if r.get("content_preview"):
+            snippets.append(r["content_preview"])
+        
+        # Calculate confidence based on score (normalize to 0-1)
+        # BM25 scores are unbounded, so we use a sigmoid-like function
+        confidence = min(1.0, r["score"] / 10.0)  # Adjust divisor based on your score range
+        
+        results.append(
+            Result(
+                destination = r["destination"],
+                country = r.get("country", ""),
+                lat = r.get("lat"),
+                lon = r.get("lon"),
+                score = round(r["score"], 4),
+                confidence = round(confidence, 4),
+                trend_delta = None,
+                tags = [],  # BM25 results don't have structured tags
+                context_cues = {},
+                snippets = snippets[:2],  # Limit to 2 snippets
+                why = {
+                    "model": "BM25",
+                    "page_title": r.get("page_title", ""),
+                    "page_url": r.get("page_url", ""),
+                    "blog_url": r.get("blog_url", ""),
+                    "author": r.get("author", ""),
+                },
+            )
+        )
+    
+    return results
+
+
 # ----------------------------
 # API
 # ----------------------------
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "bm25_model_available": BM25_AVAILABLE,
+    }
 
 
 @app.post("/search", response_model=SearchResponse)
@@ -230,6 +302,21 @@ def search(req: SearchRequest):
 
     Confidence ~ clipped(base) for now.
     """
+    
+    # Route to BM25 if selected
+    if req.retrieval.model == "bm25":
+        results = bm25_search(req)
+
+        return SearchResponse(
+            query = req.query,
+            params = {
+                "filters": req.filters.model_dump(),
+                "retrieval": req.retrieval.model_dump(),
+                "model_used": "bm25",
+            },
+            results = results,
+        )
+    
     # weights tuned lightly; tweak as you evaluate
     w_attr = 0.5 if req.retrieval.model == "attribute+context" else 0.2
     w_ctx  = 0.35 if req.retrieval.model == "attribute+context" else 0.2

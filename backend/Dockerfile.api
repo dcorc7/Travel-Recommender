@@ -27,12 +27,19 @@ COPY ./backend/off_the_path/ /app/off_the_path/
 RUN python -m pip install --upgrade pip wheel \
  && pip install .
 
+
+# Create __init__.py to make api a proper Python package
+RUN touch /app/src/api/__init__.py
+
 # Expose port
 EXPOSE 8000
 
 # Healthcheck (expects GET /health)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
+
+# Change workinf directory so that import paths work correctly
+WORKDIR /app/src
 
 # Start server
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
