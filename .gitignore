@@ -51,3 +51,7 @@ data/raw/
 # Keep generated CSV data for reproducibility
 !data/raw/*.csv
 
+# Ignore dependency management files
+poetry.lock
+uv.lock
+
