@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "off-the-beaten-path"
+name = "off-the-path"
 version = "1.0.0"
 description = "ML-powered Travel Recommendation tool"
 authors = [
@@ -61,6 +61,7 @@ dependencies = [
 
     # BM25 package
     "rank_bm25>=0.2.1",
+    "huggingface-hub (>=1.1.7,<2.0.0)",
 ]
 
 [project.optional-dependencies]
@@ -98,17 +99,11 @@ dev = [
 #Repository = "https://github.com/trevoradriaanse/anythings-pawsible"
 #Issues = "https://github.com/trevoradriaanse/anythings-pawsible/issues"
 
-[project.scripts]
-# CLI commands for running different parts of the pipeline
-# pawsible-process = "src.data.run_processing:main"
-#pawsible-features = "src.features.engineer:main"
-#pawsible-train = "src.models.train_model:main"
-
 [tool.hatch.build.targets.wheel]
-packages = []
+packages = ["backend/off_the_path/off_the_path"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"src" = "src"
+"backend/off_the_path/off_the_path" = "backend/off_the_path/off_the_path"
 
 [tool.black]
 line-length = 88
