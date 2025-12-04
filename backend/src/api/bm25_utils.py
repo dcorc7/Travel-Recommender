@@ -156,6 +156,7 @@ def search_bm25(query: str, top_n: int = 12) -> List[Dict]:
             "author": post.get("page_author", ""),
             "description": post.get("page_description", ""),
             "content_preview": content_preview,
+            "full_content": post.get('content', ""),
         })
     
     return results
