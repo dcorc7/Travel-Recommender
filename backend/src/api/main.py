@@ -16,6 +16,13 @@ except ImportError as e:
     print(f"Warning: BM25 not available: {e}")
     BM25_AVAILABLE = False
 
+# Import LLM link for explanations
+try:
+    from .llm_utils import explain_results
+except ImportError as e:
+    print(f"Warning: LLM not available: {e}")
+
+
 app = FastAPI(title="Off-the-Beaten-Path Travel API")
 
 # Add event handler to preload bm25 index data to limit search time
