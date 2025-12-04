@@ -395,6 +395,7 @@ def search(req: SearchRequest):
     # sort by score desc and trim to k
     results.sort(key=lambda r: r.score, reverse=True)
     results = results[: max(1, req.retrieval.k)]
+    explanations = explain_results(req, results)
 
     # Build response
     return SearchResponse(
@@ -406,4 +407,5 @@ def search(req: SearchRequest):
             "bloom_threshold": BLOOM_THRESHOLD,
         },
         results=results,
+        explanations=explanations,
     )
