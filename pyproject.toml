@@ -100,10 +100,10 @@ dev = [
 #Issues = "https://github.com/trevoradriaanse/anythings-pawsible/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["backend/off_the_path/off_the_path"]
+packages = ["src"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"backend/off_the_path/off_the_path" = "backend/off_the_path/off_the_path"
+"src" = "src"
 
 [tool.black]
 line-length = 88
