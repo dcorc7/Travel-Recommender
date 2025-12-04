@@ -282,6 +282,18 @@ def bm25_search(req: SearchRequest) -> List[Result]:
     
     return results
 
+def explain_results(req: SearchRequest, results):
+    query = req.query
+
+    explanations = []
+    for r in results:
+        content = r.get('full_content')
+        gen_text = explain_results(query, content)
+        explanations.append(gen_text)
+    
+    return explanations
+
+
 
 # ----------------------------
 # API
@@ -313,6 +325,7 @@ def search(req: SearchRequest):
     # Route to BM25 if selected
     if req.retrieval.model == "bm25":
         results = bm25_search(req)
+        explanations = explain_results(req, results)
 
         return SearchResponse(
             query = req.query,
@@ -322,6 +335,7 @@ def search(req: SearchRequest):
                 "model_used": "bm25",
             },
             results = results,
+            explanations = explanations,
         )
     
     # weights tuned lightly; tweak as you evaluate

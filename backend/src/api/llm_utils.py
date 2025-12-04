@@ -14,9 +14,9 @@ client = InferenceClient(
 )
 # logger.info("Built Clinet")
 
-def build_prompt( query, blog_post):
+def build_prompt(query, blog_post):
     prompt = f"""
-    You are an AI assistance helping explain why the returned post about a vacation spot was retrieved for the given query.
+    You are an AI assistant helping explain why the returned post about a vacation spot was retrieved for the given query.
     The results were generated through FAISS.
     
     Given the following query: '{query}'
