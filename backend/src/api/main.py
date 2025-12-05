@@ -62,6 +62,7 @@ CORPUS = [
             "A quiet valley beyond the popular circuits—locals-only tea houses.",
             "Yak pastures and dawn bells; rarely visited side routes.",
         ],
+        "full_content": "here is full content",
     },
     {
         "destination": "Ninh Binh Backwaters",
@@ -73,6 +74,7 @@ CORPUS = [
             "Pre-sunrise kayak under limestone arches—no tour buses.",
             "Herons wake along quiet canals; underrated and serene.",
         ],
+        "full_content": "here is full content",
     },
     {
         "destination": "Svaneti Tower Villages",
@@ -84,6 +86,7 @@ CORPUS = [
             "Stone towers, hay meadows, and trails stitched between clouds.",
             "A quieter alternative to crowded alpine circuits.",
         ],
+        "full_content": "here is full content",
     },
     {
         "destination": "Oaxaca Dawn Markets",
@@ -95,6 +98,7 @@ CORPUS = [
             "Corn griddles and chocolate steam; quiet courtyards before the day begins.",
             "Beloved by locals; avoid the bucket list crowds later in the day.",
         ],
+        "full_content": "here is full content",
     },
 ]
 
@@ -141,6 +145,7 @@ class Result(BaseModel):
     tags: List[str] = []
     context_cues: Dict[str, Dict[str, int]] = {}
     snippets: List[str] = []
+    full_content: str
     why: Dict[str, object] = {}
 
 
@@ -148,6 +153,7 @@ class SearchResponse(BaseModel):
     query: str
     params: Dict[str, object]
     results: List[Result]
+    explanations: List[str]
 
 
 # ----------------------------
@@ -253,8 +259,6 @@ def bm25_search(req: SearchRequest) -> List[Result]:
             snippets.append(r["description"])
         if r.get("content_preview"):
             snippets.append(r["content_preview"])
-        # if r.get("full_content"):
-        #     snippets.append(r["full_content"])
         
         # Calculate confidence based on score (normalize to 0-1)
         # BM25 scores are unbounded, so we use a sigmoid-like function
@@ -272,6 +276,7 @@ def bm25_search(req: SearchRequest) -> List[Result]:
                 tags = [],  # BM25 results don't have structured tags
                 context_cues = {},
                 snippets = snippets[:2],  # Limit to 2 snippets
+                full_content = r.get('full_content'),
                 why = {
                     "model": "BM25",
                     "page_title": r.get("page_title", ""),
@@ -287,8 +292,8 @@ def bm25_search(req: SearchRequest) -> List[Result]:
 def generate_explanations(req: SearchRequest, results):
     q = req.query
     explanations = []
-    for r in results:
-        content = r.snippets[1]
+    for r in results[0:3]:
+        content = r.full_content
         gen_text = explain_results(q, content)
         explanations.append(gen_text)
     
@@ -383,6 +388,7 @@ def search(req: SearchRequest):
                 tags=row["tags"],
                 context_cues=cues,
                 snippets=row["snippets"],
+                full_content = row.get("full_content"),
                 why={
                     "attribute_match": {k: 1.0 for k in set(req.filters.geotype + req.filters.culture + req.filters.experience) if k in row["tags"]},
                     "context_score": round(c, 3),

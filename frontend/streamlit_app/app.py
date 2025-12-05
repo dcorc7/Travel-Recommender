@@ -95,16 +95,16 @@ with loc_col2:
 with st.sidebar.expander("Model & bias controls", expanded=True):
     model = st.selectbox(
         "Retrieval model",
-        ["Attribute+Context", "BM25", "TF-IDF", "FAISS"],
+        ["attribute+context", "BM25", "TF-IDF", "FAISS"],
         index=0,
     )
-    # use_bloom = st.checkbox("Exclude high-frequency locations (Bloom filter)", True)
-    # zipf = st.slider("Zipf penalty (popularity dampening)", 0.0, 1.0, 0.35, 0.05)
-    # tier = st.checkbox("Frequency tier bucketing", True)
+    use_bloom = st.checkbox("Exclude high-frequency locations (Bloom filter)", True)
+    zipf = st.slider("Zipf penalty (popularity dampening)", 0.0, 1.0, 0.35, 0.05)
+    tier = st.checkbox("Frequency tier bucketing", True)
 
-# with st.sidebar.expander("Signals & time window", expanded=False):
-#     use_trends = st.checkbox("Use Google Trends", False)
-#     horizon = st.selectbox("Time horizon", ["all", "1y", "90d", "30d"], index=1)
+with st.sidebar.expander("Signals & time window", expanded=False):
+    use_trends = st.checkbox("Use Google Trends", False)
+    horizon = st.selectbox("Time horizon", ["all", "1y", "90d", "30d"], index=1)
 
 
 # Hero 
@@ -148,11 +148,11 @@ def payload() -> Dict[str, Any]:
         },
         "retrieval": {
             "model": m,
-            # "use_bloom": bool(use_bloom),
-            # "zipf_penalty": float(zipf),
-            # "tier_bucketing": bool(tier),
-            # "use_trends": bool(use_trends),
-            # "date_range": horizon,
+            "use_bloom": bool(use_bloom),
+            "zipf_penalty": float(zipf),
+            "tier_bucketing": bool(tier),
+            "use_trends": bool(use_trends),
+            "date_range": horizon,
             "k": int(k),
         },
     }
@@ -251,6 +251,7 @@ if run and q.strip():
             st.session_state["response"] = None
 
 response = st.session_state["response"]
+# print(response.keys)
 
 # parse the response
 if response:
@@ -400,16 +401,24 @@ with tabs[2]:
             )
 
 # Explanations tab
-with tabs[4]:
-    if not results:
-        st.info("Run a search first to view diagnostics.")
-
-# Diagnostics tab 
-with tabs[4]:
+with tabs[3]:
     if not explanations:
         st.info("Run a search first to view result explanations.")
     else:
-        st.info(f" Explanations: {explanations}")
+        st.markdown("Explanations for the top 3 destinations:")
+        # for ex in explanations:
+        #     st.markdown(f"Explanation: {ex}")
+        st.markdown(f"Destination: {df["destination"][0]}")
+        st.markdown(f" Explanation: {explanations[0]}")
+        st.markdown(f"Destination: {df["destination"][1]}")
+        st.markdown(f" Explanation: {explanations[1]}")
+        st.markdown(f"Destination: {df["destination"][2]}")
+        st.markdown(f" Explanation: {explanations[2]}")
+
+# Diagnostics tab 
+with tabs[4]:
+    if not results:
+        st.info("Run a search first to view diagnostics.")
 
 
 
