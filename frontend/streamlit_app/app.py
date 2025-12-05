@@ -58,10 +58,6 @@ q3 = st.sidebar.text_area(
    height=80,
 )
 
-hemis = st.sidebar.multiselect(
-    "Hemisphere",
-    ["Western","Eastern","Either"],
-)
 
 # combine text query fields into one
 q = f"{q1}. {q2}. {q3}"
@@ -72,39 +68,21 @@ with c1:
 with c2:
     min_conf = st.slider("Min confidence", 0.0, 1.0, 0.0, 0.05)
 
-# st.sidebar.markdown('<div class="sidebar-section-label">Attributes</div>', unsafe_allow_html=True)
-
 run = st.sidebar.button("🔎 Run search", use_container_width=True)
 
-# Location filter
-st.sidebar.markdown('<div class="sidebar-section-label">Location Specification:</div>', unsafe_allow_html=True)
-loc_col1, loc_col2 = st.sidebar.columns([2, 1])
-with loc_col1:
-    location_name = st.text_input(
-        "Location name",
-        placeholder="e.g., Jakarta, Belize, Coron",
-    )
-with loc_col2:
-    location_match = st.selectbox(
-        "Match",
-        ["contains", "exact"],
-        index=0,
-        help="Use 'contains' for partial matches, 'exact' for precise name.",
-        )
+model = st.sidebar.selectbox(
+    "Retrieval model",
+    ["BM25", "FAISS"],
+    index=0,
+)
 
-with st.sidebar.expander("Model & bias controls", expanded=True):
-    model = st.selectbox(
-        "Retrieval model",
-        ["attribute+context", "BM25", "TF-IDF", "FAISS"],
-        index=0,
-    )
-    use_bloom = st.checkbox("Exclude high-frequency locations (Bloom filter)", True)
-    zipf = st.slider("Zipf penalty (popularity dampening)", 0.0, 1.0, 0.35, 0.05)
-    tier = st.checkbox("Frequency tier bucketing", True)
+    # use_bloom = st.checkbox("Exclude high-frequency locations (Bloom filter)", True)
+    # zipf = st.slider("Zipf penalty (popularity dampening)", 0.0, 1.0, 0.35, 0.05)
+    # tier = st.checkbox("Frequency tier bucketing", True)
 
-with st.sidebar.expander("Signals & time window", expanded=False):
-    use_trends = st.checkbox("Use Google Trends", False)
-    horizon = st.selectbox("Time horizon", ["all", "1y", "90d", "30d"], index=1)
+# with st.sidebar.expander("Signals & time window", expanded=False):
+#     use_trends = st.checkbox("Use Google Trends", False)
+#     horizon = st.selectbox("Time horizon", ["all", "1y", "90d", "30d"], index=1)
 
 
 # Hero 
@@ -135,24 +113,15 @@ def payload() -> Dict[str, Any]:
     m = (
         "attribute+context"
         if model.startswith("attribute")
-        else ("bm25" if model.lower().startswith("bm25") else "tfidf")
+        else ("bm25" if model.lower().startswith("bm25") else "faiss")
     )
     return {
         "query": q.strip(),
         "filters": {
-            "hemishere": hemis,
-            # "geotype": geo,
-            # "culture": cult,
-            # "experience": exp,
             "min_confidence": float(min_conf),
         },
         "retrieval": {
             "model": m,
-            "use_bloom": bool(use_bloom),
-            "zipf_penalty": float(zipf),
-            "tier_bucketing": bool(tier),
-            "use_trends": bool(use_trends),
-            "date_range": horizon,
             "k": int(k),
         },
     }
@@ -165,9 +134,6 @@ def score_chip(label: str, value: str) -> str:
 def render_result_card(r: Dict[str, Any], i: int):
     left, right = st.columns([6, 3])
 
-    geotype = ", ".join(r.get("geotype", []) if isinstance(r.get("geotype"), list) else [r.get("geotype")] if r.get("geotype") else [])
-    culture = ", ".join(r.get("culture", []) if isinstance(r.get("culture"), list) else [r.get("culture")] if r.get("culture") else [])
-
     with left:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.markdown(f'<p class="title">{i}. {r["destination"]}</p>', unsafe_allow_html=True)
@@ -176,16 +142,6 @@ def render_result_card(r: Dict[str, Any], i: int):
             unsafe_allow_html=True,
         )
 
-        meta_pieces = []
-        if geotype:
-            meta_pieces.append(f"🧭 {geotype}")
-        if culture:
-            meta_pieces.append(f"🎭 {culture}")
-        if meta_pieces:
-            st.markdown(
-                f"<div class='card-meta'>{' · '.join(meta_pieces)}</div>",
-                unsafe_allow_html=True,
-            )
 
         # Tag pills
         tags = r.get("tags", [])
@@ -224,15 +180,9 @@ def render_result_card(r: Dict[str, Any], i: int):
         chips = [
             score_chip("Score", f"{r.get('score',0):.2f}"),
             score_chip("Confidence", f"{r.get('confidence',0):.2f}"),
-            score_chip(
-                "Trend",
-                "📈"
-                if (r.get("trend_delta") or 0) > 0.1
-                else ("📉" if (r.get("trend_delta") or 0) < -0.1 else "➖"),
-            ),
         ]
         st.markdown(" ".join(chips), unsafe_allow_html=True)
-        st.caption("Why this destination surfaced")
+        # st.caption("Why this destination surfaced")
         with st.expander("See full scoring breakdown", expanded=False):
             st.json(r.get("why", {}))
         st.markdown("</div>", unsafe_allow_html=True)
@@ -269,9 +219,7 @@ with tabs[0]:
         """
 This interface explores **context-aware travel discovery**:
 
-- Combines blog & guidebook text with structured attributes (geotype, culture, experience).  
-- Uses **retrieval models** (attribute+context, BM25, TF-IDF) to surface candidate places.  
-- Applies **popularity dampening** (Bloom filter + Zipf-style penalty) to surface hidden gems.  
+Uses **retrieval models** (BM25 or FAISS) to surface candidate places.  
 
 ---
 
