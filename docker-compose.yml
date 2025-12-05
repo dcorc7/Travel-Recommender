@@ -7,6 +7,7 @@ services:
     environment:
       # Set DATABASE_URL variable in .env file at project root
       DATABASE_URL: ${DATABASE_URL}
+      HF_TOKEN: ${HF_TOKEN}
     ports:
       # host:container
       - "8081:8000"          
