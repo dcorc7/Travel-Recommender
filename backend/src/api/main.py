@@ -253,6 +253,8 @@ def bm25_search(req: SearchRequest) -> List[Result]:
             snippets.append(r["description"])
         if r.get("content_preview"):
             snippets.append(r["content_preview"])
+        # if r.get("full_content"):
+        #     snippets.append(r["full_content"])
         
         # Calculate confidence based on score (normalize to 0-1)
         # BM25 scores are unbounded, so we use a sigmoid-like function
@@ -282,13 +284,12 @@ def bm25_search(req: SearchRequest) -> List[Result]:
     
     return results
 
-def explain_results(req: SearchRequest, results):
-    query = req.query
-
+def generate_explanations(req: SearchRequest, results):
+    q = req.query
     explanations = []
     for r in results:
-        content = r.get('full_content')
-        gen_text = explain_results(query, content)
+        content = r.snippets[1]
+        gen_text = explain_results(q, content)
         explanations.append(gen_text)
     
     return explanations
@@ -325,7 +326,7 @@ def search(req: SearchRequest):
     # Route to BM25 if selected
     if req.retrieval.model == "bm25":
         results = bm25_search(req)
-        explanations = explain_results(req, results)
+        explanations = generate_explanations(req, results)
 
         return SearchResponse(
             query = req.query,
@@ -395,7 +396,7 @@ def search(req: SearchRequest):
     # sort by score desc and trim to k
     results.sort(key=lambda r: r.score, reverse=True)
     results = results[: max(1, req.retrieval.k)]
-    explanations = explain_results(req, results)
+    explanations = generate_explanations(req, results)
 
     # Build response
     return SearchResponse(

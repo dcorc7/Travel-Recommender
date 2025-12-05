@@ -13,7 +13,7 @@ hf_token = os.getenv('HF_TOKEN')
 logger.info("Retrieved HuggingFace Token")
 
 client = InferenceClient(
-    api_key=hf_token,
+    token=hf_token,
 )
 logger.info("Built Clinet")
 

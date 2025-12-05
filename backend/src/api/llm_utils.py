@@ -7,10 +7,11 @@ from dotenv import load_dotenv
 # Create HuggingFace Hub Link
 load_dotenv()
 hf_token = os.getenv('HF_TOKEN')
+
 # logger.info("Retrieved HuggingFace Token")
 
 client = InferenceClient(
-    api_key=hf_token,
+    token=hf_token,
 )
 # logger.info("Built Clinet")
 
@@ -34,14 +35,18 @@ def explain_results(query, post):
     prompt = build_prompt(query, post)
     # logger.info("Built Prompt")
 
-    completion = client.chat.completions.create(
-        model="deepseek-ai/DeepSeek-V3.2",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-    )
+    gen_text = "Explanation Here"
 
-    return completion.choices[0].message['content']
+    # print("starting text generation")
+    # completion = client.chat.completions.create(
+    #     model="deepseek-ai/DeepSeek-V3.2",
+    #     messages=[
+    #         {
+    #             "role": "user",
+    #             "content": prompt
+    #         }
+    #     ],
+    # )
+    # gen_text = completion.choices[0].message['content']
+
+    return gen_text
