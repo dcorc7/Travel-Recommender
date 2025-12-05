@@ -406,14 +406,11 @@ with tabs[3]:
         st.info("Run a search first to view result explanations.")
     else:
         st.markdown("Explanations for the top 3 destinations:")
-        # for ex in explanations:
-        #     st.markdown(f"Explanation: {ex}")
-        st.markdown(f"Destination: {df["destination"][0]}")
-        st.markdown(f" Explanation: {explanations[0]}")
-        st.markdown(f"Destination: {df["destination"][1]}")
-        st.markdown(f" Explanation: {explanations[1]}")
-        st.markdown(f"Destination: {df["destination"][2]}")
-        st.markdown(f" Explanation: {explanations[2]}")
+
+        # for i in range(0,len(df)):
+        for i in range(0,3):
+            st.markdown(f"Destination: {df["destination"][i]}")
+            st.markdown(f" Explanation: {explanations[i]}")
 
 # Diagnostics tab 
 with tabs[4]:
