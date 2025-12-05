@@ -7,7 +7,16 @@ import pydeck as pdk
 import requests
 import streamlit as st
 
-# Page config & global styles 
+BASE_DIR = os.path.dirname(__file__)
+
+def apply_custom_css(filename: str = "style.css") -> None:
+    """Load a CSS file from disk and inject it into the Streamlit app."""
+    css_path = os.path.join(BASE_DIR, filename)
+    with open(css_path) as f:
+        css = f.read()
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
+# Page config 
 st.set_page_config(
     page_title="Off-the-Beaten-Path Travel Recommender",
     page_icon="",
@@ -15,238 +24,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.markdown(
-    """
-<style>
-/* ---------- Base typography & layout ---------- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-html, body, [class*="css"] {
-  font-family: 'Inter', sans-serif;
-}
-
-.main {
-  /* Softer, more "product" background */
-  background:
-    radial-gradient(circle at top left, rgba(129,140,248,0.18) 0, transparent 45%),
-    radial-gradient(circle at bottom right, rgba(45,212,191,0.18) 0, transparent 50%),
-    #f3f4f6;
-}
-
-.main .block-container {
-  padding-top: 0.75rem;
-  padding-bottom: 4rem;
-  max-width: 1180px;
-}
-
-/* Hide Streamlit chrome */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-
-/* ---------- Hero ---------- */
-.app-hero {
-  padding: 1.6rem 0 0.9rem 0;
-}
-.app-hero-inner {
-  background: radial-gradient(circle at top left, #eef2ff, #ffffff);
-  border-radius: 22px;
-  padding: 1.2rem 1.6rem;
-  border: 1px solid rgba(148,163,184,0.45);
-  box-shadow: 0 18px 45px rgba(15,23,42,0.15);
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-}
-.app-hero-icon {
-  font-size: 2.4rem;
-  filter: drop-shadow(0 6px 18px rgba(55,65,81,0.35));
-}
-.app-hero-title {
-  margin: 0;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  font-size: 1.6rem;
-}
-.app-hero-subtitle {
-  margin: 0.3rem 0 0;
-  color: #6b7280;
-  font-size: 0.97rem;
-}
-.app-hero-badges {
-  margin-top: 0.55rem;
-}
-
-/* ---------- Pills, badges, micro-UI ---------- */
-.pill {
-  display:inline-block;
-  padding:.2rem .6rem;
-  border-radius:999px;
-  background: linear-gradient(135deg,#6366f1,#8b5cf6);
-  color:#eef2ff;
-  font-size:.76rem;
-  font-weight:600;
-  margin-right:.35rem;
-  border: 0;
-}
-.badge {
-  display:inline-flex;
-  align-items:center;
-  gap: 0.25rem;
-  padding:.18rem .6rem;
-  border-radius:999px;
-  background:#f9fafb;
-  border:1px solid #e5e7eb;
-  font-size:.8rem;
-  color:#334155;
-  font-weight:500;
-  margin-right:.25rem;
-}
-.badge-dot {
-  width:8px;
-  height:8px;
-  border-radius:999px;
-  background: #22c55e;
-}
-
-/* ---------- Cards ---------- */
-.card {
-  position: relative;
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 18px 18px 14px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(203,213,225,0.85);
-  box-shadow: 0 16px 40px rgba(15,23,42,0.1);
-  overflow: hidden;
-  transition: box-shadow 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
-}
-.card::before {
-  /* subtle colored accent bar */
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  border-left: 4px solid #6366f1;
-  opacity: 0.88;
-  pointer-events: none;
-}
-.card:hover {
-  box-shadow: 0 22px 60px rgba(15,23,42,0.18);
-  transform: translateY(-1.5px);
-  border-color: rgba(129,140,248,0.9);
-}
-.card .title {
-  font-size: 1.05rem;
-  font-weight: 800;
-  margin: 0;
-}
-.card .subtitle {
-  color:#6b7280;
-  margin:.2rem 0 .45rem;
-  font-size: 0.9rem;
-}
-.card-meta {
-  font-size: 0.82rem;
-  color: #6b7280;
-  margin-bottom: 0.35rem;
-}
-
-/* ---------- Score chips & metrics ---------- */
-.scorechip {
-  background: #f9fafb;
-  border:1px solid #e5e7eb;
-  padding:.3rem .7rem;
-  border-radius:999px;
-  font-weight:600;
-  font-size: 0.83rem;
-}
-.scorechip .label {
-  color:#64748b;
-  font-weight:600;
-  margin-right:.25rem;
-}
-
-.metric-card {
-  background: linear-gradient(135deg,#eef2ff,#f9fafb);
-  border-radius: 16px;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid rgba(199,210,254,0.9);
-  box-shadow: 0 12px 32px rgba(129,140,248,0.25);
-}
-
-/* ---------- Tabs ---------- */
-.stTabs [data-baseweb="tab"] {
-  font-weight:600;
-  padding-bottom: 0.35rem;
-}
-.stTabs [aria-selected="true"] {
-  color:#111827 !important;
-  border-bottom: 2px solid #6366f1;
-}
-
-/* ---------- Buttons ---------- */
-.stButton > button {
-  border-radius: 999px;
-  padding: .55rem 1rem;
-  font-weight:700;
-  background: linear-gradient(135deg,#6366f1,#8b5cf6);
-  border:0;
-  color: #ffffff;
-  box-shadow: 0 12px 30px rgba(79,70,229,0.45);
-}
-.stButton > button:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
-}
-
-/* ---------- Sidebar ---------- */
-section[data-testid="stSidebar"] {
-  background: #0f172a;
-  color: #e5e7eb;
-  border-right: 1px solid #1f2937;
-}
-section[data-testid="stSidebar"] .sidebar-content {
-  padding-top: 0.5rem;
-}
-.sidebar-section-label {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: .09em;
-  color: #9ca3af;
-  font-weight: 600;
-  margin: 0.3rem 0 0.1rem;
-}
-
-/* Adjust labels inside sidebar */
-section[data-testid="stSidebar"] label {
-  color: #e5e7eb !important;
-}
-
-/* ---------- Map legend ---------- */
-.map-legend {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:10px;
-  font-size: 0.85rem;
-  color:#4b5563;
-}
-.map-legend-swatch {
-  width:20px;
-  height:20px;
-  border-radius:999px;
-}
-
-/* Small helper text */
-.helper-text {
-  font-size: 0.8rem;
-  color:#6b7280;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
+# Load styles from style.css
+apply_custom_css()
 
 # Backend config 
 API_URL = os.getenv("API_URL", "http://localhost:8081")
@@ -260,11 +39,32 @@ def _api_search(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 # Sidebar 
 st.sidebar.markdown('<div class="sidebar-section-label">Query</div>', unsafe_allow_html=True)
-q = st.sidebar.text_area(
-    "Describe what you want in a travel destination:",
-    placeholder="e.g., small coastal towns in Spain with artisan markets",
-    height=80,
+
+q1 = st.sidebar.text_area(
+   "Describe what you want in a travel destination:",
+   placeholder="e.g., small coastal towns in Spain with artisan markets",
+   height=80,
 )
+
+q2 = st.sidebar.text_area(
+   "What sort of activities are you interested in?",
+   placeholder ="e.g. seeing a local performance, attending an interesting museum, tasting unique foods, ect.",
+   height=80,
+)
+
+q3 = st.sidebar.text_area(
+   "Descirbe the geographic type desired:",
+   placeholder ="e.g. coastal, mountain , urban, ect.",
+   height=80,
+)
+
+hemis = st.sidebar.multiselect(
+    "Hemisphere",
+    ["Western","Eastern","Either"],
+)
+
+# combine text query fields into one
+q = f"{q1}. {q2}. {q3}"
 
 c1, c2 = st.sidebar.columns(2)
 with c1:
@@ -272,21 +72,12 @@ with c1:
 with c2:
     min_conf = st.slider("Min confidence", 0.0, 1.0, 0.0, 0.05)
 
-st.sidebar.markdown('<div class="sidebar-section-label">Attributes</div>', unsafe_allow_html=True)
-geo = st.sidebar.multiselect(
-    "Geographic type",
-    ["coastal", "mountain", "island", "urban", "desert", "forest", "river", "lake"],
-)
-cult = st.sidebar.multiselect(
-    "Cultural focus",
-    ["food", "art", "history", "music", "markets", "festivals", "crafts"],
-)
-exp = st.sidebar.multiselect(
-    "Experience tags",
-    ["quiet", "nightlife", "adventure", "local", "hiking", "kayak", "wildlife", "scenic", "photography"],
-)
+# st.sidebar.markdown('<div class="sidebar-section-label">Attributes</div>', unsafe_allow_html=True)
+
+run = st.sidebar.button("🔎 Run search", use_container_width=True)
+
 # Location filter
-st.sidebar.markdown('<div class="sidebar-section-label">Location</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sidebar-section-label">Location Specification:</div>', unsafe_allow_html=True)
 loc_col1, loc_col2 = st.sidebar.columns([2, 1])
 with loc_col1:
     location_name = st.text_input(
@@ -299,13 +90,12 @@ with loc_col2:
         ["contains", "exact"],
         index=0,
         help="Use 'contains' for partial matches, 'exact' for precise name.",
-    )
-
+        )
 
 with st.sidebar.expander("Model & bias controls", expanded=True):
     model = st.selectbox(
         "Retrieval model",
-        ["attribute+context (recommended)", "BM25", "TF-IDF"],
+        ["attribute+context", "BM25", "TF-IDF", "FAISS"],
         index=0,
     )
     use_bloom = st.checkbox("Exclude high-frequency locations (Bloom filter)", True)
@@ -315,8 +105,6 @@ with st.sidebar.expander("Model & bias controls", expanded=True):
 with st.sidebar.expander("Signals & time window", expanded=False):
     use_trends = st.checkbox("Use Google Trends", False)
     horizon = st.selectbox("Time horizon", ["all", "1y", "90d", "30d"], index=1)
-
-run = st.sidebar.button("🔎 Run search", use_container_width=True)
 
 
 # Hero 
@@ -352,9 +140,10 @@ def payload() -> Dict[str, Any]:
     return {
         "query": q.strip(),
         "filters": {
-            "geotype": geo,
-            "culture": cult,
-            "experience": exp,
+            "hemishere": hemis,
+            # "geotype": geo,
+            # "culture": cult,
+            # "experience": exp,
             "min_confidence": float(min_conf),
         },
         "retrieval": {
@@ -450,20 +239,29 @@ def render_result_card(r: Dict[str, Any], i: int):
 
 
 # Run search 
-if "results" not in st.session_state:
-    st.session_state["results"] = None
+if "response" not in st.session_state:
+    st.session_state["response"] = None
 
 if run and q.strip():
     with st.spinner("Searching blogs and ranking destinations…"):
         try:
-            st.session_state["results"] = _api_search(payload())
+            st.session_state["response"] = _api_search(payload())
         except Exception as e:
             st.error(f"API call failed: {e}")
-            st.session_state["results"] = None
+            st.session_state["response"] = None
 
-results = st.session_state["results"]
+response = st.session_state["response"]
+# print(response.keys)
 
-tabs = st.tabs(["About", "Results", "Maps", "Diagnostics"])
+# parse the response
+if response:
+    results = response.get("results") if isinstance(response, dict) else response.results
+    explanations = response.get("explanations") if isinstance(response, dict) else response.explanations
+else:
+    results = []
+    explanations = []
+
+tabs = st.tabs(["About", "Results", "Maps", "Explanations", "Diagnostics"])
 # About tab 
 with tabs[0]:
     st.subheader("About this prototype")
@@ -489,12 +287,16 @@ _DSAN 6700: Off-the-Beaten-Path Travel Recommender Project_
 ---
 """
     )
+    if API_URL:
+        st.caption(f"Connected to API at `{API_URL}`")
+
+
 # Results tab 
 with tabs[1]:
     if not results:
         st.info("Run a search from the sidebar to see recommendations.")
     else:
-        res_list = results.get("results", [])
+        res_list = results
         if res_list:
             scores = [r.get("score", 0) for r in res_list]
             confs = [r.get("confidence", 0) for r in res_list]
@@ -514,7 +316,7 @@ with tabs[1]:
                 st.markdown("</div>", unsafe_allow_html=True)
 
             st.caption(
-                f"Showing top {len(res_list)} results for: “{results.get('query','')}”"
+                f"Showing top {len(res_list)} results for: “{response.get('query','')}”"
             )
             for i, r in enumerate(res_list, start=1):
                 render_result_card(r, i)
@@ -537,7 +339,7 @@ with tabs[2]:
                     "score": r.get("score"),
                     "confidence": r.get("confidence"),
                 }
-                for r in results.get("results", [])
+                for r in response.get("results", [])
                 if r.get("lat") is not None and r.get("lon") is not None
             ]
         )
@@ -598,15 +400,23 @@ with tabs[2]:
                 unsafe_allow_html=True,
             )
 
-# Diagnostics tab 
+# Explanations tab
 with tabs[3]:
+    if not explanations:
+        st.info("Run a search first to view result explanations.")
+    else:
+        st.markdown("Explanations for the top 3 destinations:")
+
+        # for i in range(0,len(df)):
+        for i in range(0,3):
+            st.markdown(f"Destination: {df["destination"][i]}")
+            st.markdown(f" Explanation: {explanations[i]}")
+
+# Diagnostics tab 
+with tabs[4]:
     if not results:
         st.info("Run a search first to view diagnostics.")
-    else:
-        st.subheader("Resolved parameters")
-        st.json(results.get("params", {}))
 
 
 
-    if API_URL:
-        st.caption(f"Connected to API at `{API_URL}`")
+

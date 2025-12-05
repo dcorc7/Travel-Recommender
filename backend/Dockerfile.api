@@ -21,7 +21,7 @@ COPY pyproject.toml  README.md /app/
 # Copy backend code
 COPY ./backend/src/ /app/src/
 COPY ./backend/configs/ /app/configs
-COPY ./backend/off_the_path/ /app/off_the_path/
+# COPY ./backend/off_the_path/ /app/off_the_path/
 
 # Install Python dependencies (including backend package)
 RUN python -m pip install --upgrade pip wheel \

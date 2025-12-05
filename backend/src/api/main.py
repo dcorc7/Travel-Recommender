@@ -16,6 +16,13 @@ except ImportError as e:
     print(f"Warning: BM25 not available: {e}")
     BM25_AVAILABLE = False
 
+# Import LLM link for explanations
+try:
+    from .llm_utils import explain_results
+except ImportError as e:
+    print(f"Warning: LLM not available: {e}")
+
+
 app = FastAPI(title="Off-the-Beaten-Path Travel API")
 
 # Add event handler to preload bm25 index data to limit search time
@@ -55,6 +62,7 @@ CORPUS = [
             "A quiet valley beyond the popular circuits—locals-only tea houses.",
             "Yak pastures and dawn bells; rarely visited side routes.",
         ],
+        "full_content": "here is full content",
     },
     {
         "destination": "Ninh Binh Backwaters",
@@ -66,6 +74,7 @@ CORPUS = [
             "Pre-sunrise kayak under limestone arches—no tour buses.",
             "Herons wake along quiet canals; underrated and serene.",
         ],
+        "full_content": "here is full content",
     },
     {
         "destination": "Svaneti Tower Villages",
@@ -77,6 +86,7 @@ CORPUS = [
             "Stone towers, hay meadows, and trails stitched between clouds.",
             "A quieter alternative to crowded alpine circuits.",
         ],
+        "full_content": "here is full content",
     },
     {
         "destination": "Oaxaca Dawn Markets",
@@ -88,6 +98,7 @@ CORPUS = [
             "Corn griddles and chocolate steam; quiet courtyards before the day begins.",
             "Beloved by locals; avoid the bucket list crowds later in the day.",
         ],
+        "full_content": "here is full content",
     },
 ]
 
@@ -134,6 +145,7 @@ class Result(BaseModel):
     tags: List[str] = []
     context_cues: Dict[str, Dict[str, int]] = {}
     snippets: List[str] = []
+    full_content: str
     why: Dict[str, object] = {}
 
 
@@ -141,6 +153,7 @@ class SearchResponse(BaseModel):
     query: str
     params: Dict[str, object]
     results: List[Result]
+    explanations: List[str]
 
 
 # ----------------------------
@@ -263,6 +276,7 @@ def bm25_search(req: SearchRequest) -> List[Result]:
                 tags = [],  # BM25 results don't have structured tags
                 context_cues = {},
                 snippets = snippets[:2],  # Limit to 2 snippets
+                full_content = r.get('full_content'),
                 why = {
                     "model": "BM25",
                     "page_title": r.get("page_title", ""),
@@ -274,6 +288,17 @@ def bm25_search(req: SearchRequest) -> List[Result]:
         )
     
     return results
+
+def generate_explanations(req: SearchRequest, results):
+    q = req.query
+    explanations = []
+    for r in results[0:3]:
+        content = r.full_content
+        gen_text = explain_results(q, content)
+        explanations.append(gen_text)
+    
+    return explanations
+
 
 
 # ----------------------------
@@ -306,6 +331,7 @@ def search(req: SearchRequest):
     # Route to BM25 if selected
     if req.retrieval.model == "bm25":
         results = bm25_search(req)
+        explanations = generate_explanations(req, results)
 
         return SearchResponse(
             query = req.query,
@@ -315,6 +341,7 @@ def search(req: SearchRequest):
                 "model_used": "bm25",
             },
             results = results,
+            explanations = explanations,
         )
     
     # weights tuned lightly; tweak as you evaluate
@@ -361,6 +388,7 @@ def search(req: SearchRequest):
                 tags=row["tags"],
                 context_cues=cues,
                 snippets=row["snippets"],
+                full_content = row.get("full_content"),
                 why={
                     "attribute_match": {k: 1.0 for k in set(req.filters.geotype + req.filters.culture + req.filters.experience) if k in row["tags"]},
                     "context_score": round(c, 3),
@@ -374,6 +402,7 @@ def search(req: SearchRequest):
     # sort by score desc and trim to k
     results.sort(key=lambda r: r.score, reverse=True)
     results = results[: max(1, req.retrieval.k)]
+    explanations = generate_explanations(req, results)
 
     # Build response
     return SearchResponse(
@@ -385,4 +414,5 @@ def search(req: SearchRequest):
             "bloom_threshold": BLOOM_THRESHOLD,
         },
         results=results,
+        explanations=explanations,
     )
