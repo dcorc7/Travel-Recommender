@@ -3,40 +3,67 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+import time
 from typing import Dict, List, Optional
+import uuid
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel, Field
+
+from .logging_utils import get_logger
+
+logger = get_logger("api")
 
 # Import BM25 utilities
 try:
     from .bm25_utils import search_bm25
     BM25_AVAILABLE = True
 except ImportError as e:
-    print(f"Warning: BM25 not available: {e}")
+    logger.warning(f"BM25 not available: {e}")
     BM25_AVAILABLE = False
 
 # Import LLM link for explanations
 try:
     from .llm_utils import explain_results
 except ImportError as e:
-    print(f"Warning: LLM not available: {e}")
+    logger.warning(f"LLM not available: {e}")
 
 
 app = FastAPI(title="Off-the-Beaten-Path Travel API")
+
+# Middleware for logging requests
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+
+    response = await call_next(request)
+    process_time = (time.time() - start_time) * 1000
+    
+    log_data = {
+        "request_id": request_id,
+        "method": request.method,
+        "path": request.url.path,
+        "status_code": response.status_code,
+        "duration_ms": round(process_time, 2)
+    }
+    
+    logger.info("Request processed", extra={"props": log_data})
+    
+    return response
 
 # Add event handler to preload bm25 index data to limit search time
 @app.on_event("startup")
 async def startup_event():
     """Preload BM25 index on API startup."""
     if BM25_AVAILABLE:
-        print("Preloading BM25 index...")
+        logger.info("Preloading BM25 index...")
         try:
             from .bm25_utils import _load_blogs_from_db
             _load_blogs_from_db()
-            print("✓ BM25 index preloaded and ready!")
+            logger.info("✓ BM25 index preloaded and ready!")
         except Exception as e:
-            print(f"✗ Failed to preload BM25 index: {e}")
+            logger.error(f"✗ Failed to preload BM25 index: {e}")
 
 
 # ----------------------------
@@ -89,8 +116,12 @@ def generate_explanations(req: SearchRequest, results):
     explanations = []
     for r in results[0:3]:
         content = r.full_content
-        gen_text = explain_results(q, content)
-        explanations.append(gen_text)
+        try:
+            gen_text = explain_results(q, content)
+            explanations.append(gen_text)
+        except Exception as e:
+            logger.error(f"LLM explanation failed: {e}")
+            explanations.append("Explanation unavailable.")
     
     return explanations
 
@@ -104,13 +135,20 @@ def bm25_search(req: SearchRequest) -> List[Result]:
     """Handle BM25 search using the database."""
     if not BM25_AVAILABLE:
         # Return empty results if BM25 not available
+        logger.warning("BM25 search requested but model is not available.")
         return []
     
+    logger.info(f"Executing BM25 search for query: '{req.query}'")
     # Call the BM25 utility function
     raw_results = search_bm25(req.query, top_n = req.retrieval.k)
     
+    logger.info(f"BM25 found {len(raw_results)} raw results")
+
     results = []
     for r in raw_results:
+        if "destination" not in r:
+            logger.error("BM25 result missing required field 'destination'", extra={"props": r})
+            continue
         # Create snippets from content preview and description
         snippets = []
         if r.get("description"):
@@ -151,12 +189,15 @@ def bm25_search(req: SearchRequest) -> List[Result]:
 def faiss_search(req: SearchRequest) -> List[Result]:
     """Handle FAISS search using the database."""
 
+    logger.info(f"Executing FAISS search for query: '{req.query}'")
     ### UPDATE HERE *******
     
     # Call the FAISS utility function
     # raw_results = search_faiss(req.query, top_n = req.retrieval.k)
-    raw_results = {}
+    raw_results = []  # Placeholder until FAISS utility is implemented
     
+    logger.info(f"FAISS found {len(raw_results)} raw results")
+
     results = []
     for r in raw_results:
         # Create snippets from content preview and description
@@ -184,7 +225,7 @@ def faiss_search(req: SearchRequest) -> List[Result]:
                 snippets = snippets[:2],  # Limit to 2 snippets
                 full_content = r.get('full_content'),
                 why = {
-                    "model": "BM25",
+                    "model": "FAISS",
                     "page_title": r.get("page_title", ""),
                     "page_url": r.get("page_url", ""),
                     "blog_url": r.get("blog_url", ""),

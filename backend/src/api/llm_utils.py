@@ -1,21 +1,26 @@
 import os
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
-# import logging_utils
 
+# Import Logger
+from .logging_utils import get_logger
+
+logger = get_logger("llm_utils")
 
 # Create HuggingFace Hub Link
 load_dotenv()
 
 hf_token = os.getenv('HF_TOKEN')
 
-
-# logger.info("Retrieved HuggingFace Token")
+if hf_token:
+    logger.info("Retrieved HuggingFace Token")
+else:
+    logger.warning("HF_TOKEN not found. LLM features may fail.")
 
 client = InferenceClient(
     token=hf_token,
 )
-# logger.info("Built Clinet")
+logger.info("Built Client")
 
 def build_prompt(query, blog_post):
     prompt = f"""
@@ -35,20 +40,24 @@ def build_prompt(query, blog_post):
 def explain_results(query, post_text):
 
     prompt = build_prompt(query, post_text)
-    # logger.info("Built Prompt")
+    logger.info("Built Prompt")
 
     if hf_token:
-        completion = client.chat.completions.create(
-            model="deepseek-ai/DeepSeek-V3.2",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-        )
-        gen_text = completion.choices[0].message['content']
+        try:
+            completion = client.chat.completions.create(
+                model="deepseek-ai/DeepSeek-V3.2",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+            )
+            gen_text = completion.choices[0].message['content']
+            return gen_text
+        except Exception as e:
+            logger.error(f"LLM explanation generation failed: {e}")
+            return "Explanation unavailable due to an error."
     else:
-        gen_text = "Explanation Here"
-
-    return gen_text
+        logger.warning("Skipping LLM explanation: No token available")
+        return "Explanation unavailable (No API Token)."
