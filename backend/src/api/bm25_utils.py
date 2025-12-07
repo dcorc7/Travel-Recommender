@@ -7,12 +7,11 @@ from rank_bm25 import BM25Okapi
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column
 from dotenv import load_dotenv
+# Import Logger
+from .logging_utils import get_logger
 
 # Load environment variables
 load_dotenv()
-
-# Import Logger
-from .logging_utils import get_logger
 
 logger = get_logger("bm25_utils")
 

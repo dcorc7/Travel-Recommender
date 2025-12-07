@@ -1,6 +1,5 @@
 import os
-import json
-from typing import Dict, Any, List
+from typing import Dict, Any
 import logging
 import sys
 import uuid
@@ -376,7 +375,7 @@ with tabs[3]:
 
         # for i in range(0,len(df)):
         for i in range(0,3):
-            st.markdown(f"Destination: {df["destination"][i]}")
+            st.markdown(f"Destination: {df['destination'][i]}")
             st.markdown(f" Explanation: {explanations[i]}")
 
 # Diagnostics tab 

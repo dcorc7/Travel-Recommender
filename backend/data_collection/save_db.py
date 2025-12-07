@@ -1,11 +1,7 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String, text
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column,relationships
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 from dotenv import load_dotenv
-import sqlite3
 import os
 import json
 import math
@@ -18,8 +14,8 @@ print(f"Database URL: {database_url}")
 
 engine = create_engine(database_url)
 
-Session = sessionmaker(bind=engine)
-session = Session()
+# Session = sessionmaker(bind=engine)
+session = Session(engine)
 
 # Fetch all rows from a table 
 result = session.execute(text("SELECT * FROM travel_blogs")).mappings().all()

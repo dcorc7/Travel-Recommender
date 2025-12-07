@@ -4,7 +4,6 @@ import csv
 import re
 import argparse
 import os
-import sys
 from rank_bm25 import BM25Okapi
 
 # Increase CSV field size (Windows-safe)

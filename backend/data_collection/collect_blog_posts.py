@@ -7,15 +7,12 @@ import spacy
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 from urllib.parse import urlparse
-import pandas as pd
 import math
 from decimal import Decimal
 import re
 # DB Connection Things
 from sqlalchemy import create_engine
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column,relationships
-from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
@@ -122,8 +119,8 @@ def get_wordpress_pages(base_url):
         soup = BeautifulSoup(sitemap_response.text, 'html.parser')
     # find all links on page and store in a list
     links = soup.find_all('url')
-    for l in links:
-        loc = l.find('loc')
+    for link in links:
+        loc = link.find('loc')
         if loc:
             all_pages.append(loc.text)
     return all_pages
@@ -389,7 +386,7 @@ def main():
                             print("Error:", e)
                     # if id >5:
                     #     break
-                except:
+                except Exception:
                     print("Not enough info in",link)
                     continue
 

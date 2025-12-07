@@ -1,9 +1,7 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Session
-from sqlalchemy import ForeignKey, select, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column,relationships
+from sqlalchemy import select, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from dotenv import load_dotenv
 import os
 
