@@ -11,6 +11,11 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Import Logger
+from .logging_utils import get_logger
+
+logger = get_logger("bm25_utils")
+
 # Tokenizer
 TOKEN_RE = re.compile(r"\b\w+\b")
 
@@ -55,9 +60,10 @@ def _load_blogs_from_db():
     
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
+        logger.error("DATABASE_URL not found in environment variables")
         raise ValueError("DATABASE_URL not found in environment variables")
     
-    print("Loading blog posts from database...")
+    logger.info("Loading blog posts from database...")
     engine = create_engine(database_url)
     
     posts = []
@@ -65,7 +71,7 @@ def _load_blogs_from_db():
     
     with Session(engine) as session:
         blog_posts = session.query(Whole_Blogs).all()
-        print(f"Loaded {len(blog_posts)} blog posts from database")
+        logger.info(f"Loaded {len(blog_posts)} blog posts from database")
         
         for post in blog_posts:
             posts.append({
@@ -86,10 +92,10 @@ def _load_blogs_from_db():
             corpus.append(search_text)
     
     # Build BM25 index
-    print("Building BM25 index...")
+    logger.info("Building BM25 index...")
     tokenized_corpus = [tokenize(doc) for doc in corpus]
     bm25 = BM25Okapi(tokenized_corpus)
-    print(f"BM25 index built with {len(posts)} documents")
+    logger.info(f"BM25 index built with {len(posts)} documents")
     
     # Cache the results
     _cached_posts = posts

@@ -1,11 +1,21 @@
 import os
 import json
 from typing import Dict, Any, List
+import logging
+import sys
+import uuid
 
 import pandas as pd
 import pydeck as pdk
 import requests
 import streamlit as st
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "frontend", "message": "%(message)s"}',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("frontend")
 
 BASE_DIR = os.path.dirname(__file__)
 
@@ -31,8 +41,9 @@ apply_custom_css()
 API_URL = os.getenv("API_URL", "http://localhost:8081")
 
 
-def _api_search(payload: Dict[str, Any]) -> Dict[str, Any]:
-    r = requests.post(f"{API_URL}/search", json=payload, timeout=25)
+def _api_search(payload: Dict[str, Any], request_id: str) -> Dict[str, Any]:
+    headers = {"X-Request-ID": request_id}
+    r = requests.post(f"{API_URL}/search", json=payload, headers=headers, timeout=25)
     r.raise_for_status()
     return r.json()
 
@@ -193,10 +204,18 @@ if "response" not in st.session_state:
     st.session_state["response"] = None
 
 if run and q.strip():
+    request_id = str(uuid.uuid4())
+    logger.info(f"User search initiated: query='{q}', request_id='{request_id}', filters={{'k': {k}, 'min_conf': {min_conf}, 'model': '{model}'}}")
+    
     with st.spinner("Searching blogs and ranking destinations…"):
         try:
-            st.session_state["response"] = _api_search(payload())
+            st.session_state["response"] = _api_search(payload(), request_id)
+
+            # Logging Success
+            res_count = len(st.session_state["response"].get("results", []))
+            logger.info(f"Search completed successfully: returned {res_count} results")
         except Exception as e:
+            logger.error(f"API call failed: {e}")
             st.error(f"API call failed: {e}")
             st.session_state["response"] = None
 
