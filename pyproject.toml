@@ -1,9 +1,12 @@
-package-mode = false 
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.poetry]
+package-mode = false
+
+
+# We are using Poetry for dependency management not an actual Package
 # [project]
 # name = "off-the-path"
 # version = "1.0.0"
