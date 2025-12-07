@@ -4,30 +4,30 @@ package-mode = false
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[project]
-name = "off-the-path"
-version = "1.0.0"
-description = "ML-powered Travel Recommendation tool"
-authors = [
-    {name = "Group 1"},
-]
-readme = "README.md"
-license = {text = "Apache-2.0"}
-requires-python = ">=3.10"
-keywords = ["mlops", "machine-learning", "travel", "recommendation-system", "faiss", "fastapi", "streamlit"]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Education",
-    "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-]
+# [project]
+# name = "off-the-path"
+# version = "1.0.0"
+# description = "ML-powered Travel Recommendation tool"
+# authors = [
+#     {name = "Group 1"},
+# ]
+# readme = "README.md"
+# license = {text = "Apache-2.0"}
+# requires-python = ">=3.10"
+# keywords = ["mlops", "machine-learning", "travel", "recommendation-system", "faiss", "fastapi", "streamlit"]
+# classifiers = [
+#     "Development Status :: 4 - Beta",
+#     "Intended Audience :: Education",
+#     "License :: OSI Approved :: Apache Software License",
+#     "Programming Language :: Python :: 3",
+#     "Programming Language :: Python :: 3.9",
+#     "Programming Language :: Python :: 3.10",
+#     "Programming Language :: Python :: 3.11",
+#     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+#     "Topic :: Software Development :: Libraries :: Python Modules",
+# ]
 
-# Core dependencies for travel recomendation
+# Core dependencies for travel recommendation
 dependencies = [
     # Data processing & analysis
     "pandas>=1.5.3",
