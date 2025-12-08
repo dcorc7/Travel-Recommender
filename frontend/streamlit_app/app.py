@@ -86,14 +86,6 @@ model = st.sidebar.selectbox(
     index=0,
 )
 
-    # use_bloom = st.checkbox("Exclude high-frequency locations (Bloom filter)", True)
-    # zipf = st.slider("Zipf penalty (popularity dampening)", 0.0, 1.0, 0.35, 0.05)
-    # tier = st.checkbox("Frequency tier bucketing", True)
-
-# with st.sidebar.expander("Signals & time window", expanded=False):
-#     use_trends = st.checkbox("Use Google Trends", False)
-#     horizon = st.selectbox("Time horizon", ["all", "1y", "90d", "30d"], index=1)
-
 
 # Hero 
 st.markdown(
@@ -229,36 +221,12 @@ else:
     results = []
     explanations = []
 
-tabs = st.tabs(["About", "Results", "Maps", "Explanations", "Diagnostics"])
-# About tab 
-with tabs[0]:
-    st.subheader("About this prototype")
-    st.markdown(
-        """
-This interface explores **context-aware travel discovery**:
+tabs = st.tabs(["Results", "Maps", "Explanations", "About"])
 
-Uses **retrieval models** (BM25 or FAISS) to surface candidate places.  
-
----
-
-### **Team – Group 1**
-- **Morgan Dreiss**  
-- **Nadav Gerner**  
-- **David Corcoran**  
-- **Adam Stein**  
-- **Walter Hall**
-
-_DSAN 6700: Off-the-Beaten-Path Travel Recommender Project_
-
----
-"""
-    )
-    if API_URL:
-        st.caption(f"Connected to API at `{API_URL}`")
 
 
 # Results tab 
-with tabs[1]:
+with tabs[0]:
     if not results:
         st.info("Run a search from the sidebar to see recommendations.")
     else:
@@ -291,7 +259,7 @@ with tabs[1]:
 
 
 # Map tab 
-with tabs[2]:
+with tabs[1]:
     if not results:
         st.info("Run a search first to populate the map.")
     else:
@@ -367,7 +335,7 @@ with tabs[2]:
             )
 
 # Explanations tab
-with tabs[3]:
+with tabs[2]:
     if not explanations:
         st.info("Run a search first to view result explanations.")
     else:
@@ -378,10 +346,31 @@ with tabs[3]:
             st.markdown(f"Destination: {df['destination'][i]}")
             st.markdown(f" Explanation: {explanations[i]}")
 
-# Diagnostics tab 
-with tabs[4]:
-    if not results:
-        st.info("Run a search first to view diagnostics.")
+# About tab 
+with tabs[3]:
+    st.subheader("About this prototype")
+    st.markdown(
+        """
+This interface explores **context-aware travel discovery**:
+
+Uses **retrieval models** (BM25 or FAISS) to surface candidate places.  
+
+---
+
+### **Team – Group 1**
+- **Morgan Dreiss**  
+- **Nadav Gerner**  
+- **David Corcoran**  
+- **Adam Stein**  
+- **Walter Hall**
+
+_DSAN 6700: Off-the-Beaten-Path Travel Recommender Project_
+
+---
+"""
+    )
+    if API_URL:
+        st.caption(f"Connected to API at `{API_URL}`")
 
 
 

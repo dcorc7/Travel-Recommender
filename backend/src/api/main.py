@@ -19,6 +19,14 @@ except ImportError as e:
     logger.warning(f"BM25 not available: {e}")
     BM25_AVAILABLE = False
 
+# Import FAISS utilities
+try:
+    from .modern_bert_utils import search_modernbert
+    FAISS_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"FAISS not available: {e}")
+    FAISS_AVAILABLE = False
+
 # Import LLM link for explanations
 try:
     from .llm_utils import explain_results
@@ -187,11 +195,9 @@ def faiss_search(req: SearchRequest) -> List[Result]:
     """Handle FAISS search using the database."""
 
     logger.info(f"Executing FAISS search for query: '{req.query}'")
-    ### UPDATE HERE *******
     
     # Call the FAISS utility function
-    # raw_results = search_faiss(req.query, top_n = req.retrieval.k)
-    raw_results = []  # Placeholder until FAISS utility is implemented
+    raw_results = search_modernbert(req.query, top_n = req.retrieval.k)
     
     logger.info(f"FAISS found {len(raw_results)} raw results")
 
@@ -205,7 +211,6 @@ def faiss_search(req: SearchRequest) -> List[Result]:
             snippets.append(r["content_preview"])
         
         # Calculate confidence based on score (normalize to 0-1)
-        # BM25 scores are unbounded, so we use a sigmoid-like function
         confidence = min(1.0, r["score"] / 10.0)  # Adjust divisor based on your score range
         
         results.append(
@@ -241,6 +246,7 @@ def health():
     return {
         "status": "ok",
         "bm25_model_available": BM25_AVAILABLE,
+        "faiss_search_available": FAISS_AVAILABLE,
     }
 
 
