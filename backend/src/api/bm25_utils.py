@@ -43,7 +43,7 @@ class Whole_Blogs(Base):
     latitude: Mapped[float]
     longitude: Mapped[float]
     content: Mapped[str]
-    embedding: Mapped[list[float]] = mapped_column(ARRAY(Float))  # new column
+    #embedding: Mapped[list[float]] = mapped_column(ARRAY(Float))  # new column
 
     def __repr__(self) -> str:
         return f"Whole_Blogs(id={self.id!r}, location_name={self.location_name!r}, page_title={self.page_title!r})"

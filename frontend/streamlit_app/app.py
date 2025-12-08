@@ -42,7 +42,7 @@ API_URL = os.getenv("API_URL", "http://localhost:8081")
 
 def _api_search(payload: Dict[str, Any], request_id: str) -> Dict[str, Any]:
     headers = {"X-Request-ID": request_id}
-    r = requests.post(f"{API_URL}/search", json=payload, headers=headers, timeout=25)
+    r = requests.post(f"{API_URL}/search", json=payload, headers=headers, timeout=60)
     r.raise_for_status()
     return r.json()
 
