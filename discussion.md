@@ -1,48 +1,234 @@
-# Discussion
+# Off-The-Beaten-Path Travel Recommender — Final Project Discussion
 
-This project set out to build a context aware travel recommender that can surface “off-the-beaten-path” destinations rather than repeating the same mainstream tourist hotspots. Over the course of implementation, we combined traditional information retrieval(IR) techniques, structured attributes, large-language-model explanations, and a fully containerized architecture with cloud storage on AWS. The final system not only returns relevant destinations, but also offers interpretable explanations and a modern, usable interface.
+This project set out to reimagine how people discover travel destinations. Instead of repeatedly surfacing the same viral hotspots that dominate TripAdvisor, Google, and social media, our goal was to build a **context-aware recommender** capable of uncovering *hidden gems* places that feel local, underexplored, and aligned with a traveler’s personal style.
 
-## Retrieval Models and Popularity Bias
-Our first baseline was a BM25 search engine over a corpus of travel blogs. The backend structure reflects this separation: the backend/bm25 module contains scripts for constructing and evaluating BM25, while the API entry point in backend/src/api/main.py exposes a /search endpoint that can route requests to either BM25 or a custom ranking model. BM25 provided a strong traditional baseline, especially for specific keyword queries, but it also made the project’s central problem clear that it tends to over rank destinations that appear frequently in the corpus, reinforcing popularity bias.
+To do this, we combined **traditional IR**, **semantic vector retrieval**, **structured attributes**, **popularity dampening**, **LLM-generated explanations**, and a **fully containerized architecture** backed by AWS. The result is a hybrid system that not only retrieves relevant destinations, but also helps users understand *why* they were recommended, all through a clean, modern interface.
 
-To address this, we implemented an Attribute+Context model that integrates three main signals attribute matching, contextual cues, and query term overlap. The attribute component uses structured filters (geographic type, cultural focus, and experience tags) to ensure that results align with the user’s stated preferences. The context component scans snippets for phrases like “hidden gem,” “locals only,” or “underrated” versus “bucket list” or “tourist hotspot,” and shifts scores accordingly. This allowed the system to distinguish between generic mentions of a destination and blog posts that explicitly frame a location as quiet, local, or off the beaten path.
+---
 
-## LLM-Based Explanations
-A notable extension beyond classic IR is the integration of a large language model explanation layer. In addition to returning structured fields (destination, country, tags, snippets, and scores), the API can call out to a Hugging Face model (configured in backend/src/api/llm_utils.py) to generate short, human-readable explanations for why each result was retrieved.
+## 1. Retrieval Models: Lexical, Semantic, and Hybrid Reasoning
 
-This LLM uses the original query and a summary of blog snippets as input and returns a concise paragraph describing why the location is a good fit. Conceptually, this moves the system closer to an explanatory recommender instead of just saying “Ninh Binh Backwaters – score 8.3,” the system can produce a justification like “This destination matches your request for quiet river scenery and local experiences, with early-morning kayak routes away from tour buses.” Even when the underlying ranking logic remains relatively simple, the explanation layer improves user trust and makes the system easier to evaluate qualitatively.
+The system supports two complementary retrieval engines:
 
-## Frontend Design and User Experience
-The frontend, implemented in frontend/streamlit_app/app.py, evolved into a polished, product like interface. We separated concerns by moving all custom CSS into frontend/streamlit_app/style.css, then loading it via a small helper function. This made it much easier for the team to collaborate on styling changes no longer risked breaking Python logic, and interface tweaks could be done independently of the backend.
+### **BM25 Keyword Retrieval**
+Our first baseline was a BM25 search engine over a corpus of travel blogs. It works well for:
+- Precise keyword queries  
+- Debugging and metadata validation  
+- Transparent, interpretable ranking  
 
-A key UX improvement was splitting the main text query into multiple prompts in the sidebar for example, asking separately about desired destination characteristics, activities, and geographic preferences. These fields are then concatenated into a single query string for the backend, but the guided prompts help users provide richer, more structured descriptions. Combined with multiselect filters for geographic type, cultural focus, and experience tags, this design encourages users to express both explicit constraints and softer “vibe” preferences.
+However, BM25 also revealed a core challenge:  
+**frequently mentioned destinations automatically rise to the top**, reinforcing popularity bias.
 
-On the results side, we used card-style layouts, metric chips, and a pydeck map to make model outputs more interpretable. The “Results” tab summarizes aggregate metrics (e.g., number of destinations, average score and confidence), while the “Maps” tab visualizes destinations geographically with color coding by score. A “Diagnostics” tab exposes the resolved parameters and model settings that were used for a given query, supporting transparency and debugging.
+### **ModernBERT Semantic Search**
+To move beyond surface-level text matching, we introduced **ModernBERT-based dense vector retrieval**. Travel blog content is encoded offline into high-dimensional embeddings and indexed with FAISS, enabling fast semantic similarity search.
 
-## Data Pipeline and AWS Storage
-Under the hood, the directory structure reflects a clear pipeline:
-- backend/data_collection contains scripts for scraping and reading travel blogs (get_travel_blogs.py, read_blogs_db.py).
+Semantic retrieval excels at:
+- Experience-oriented prompts (*“quiet coastal villages”*)  
+- Synonym-rich queries (*“trek” vs. “hike”*)  
+- Meaning-first exploration when users don’t know exact keywords  
 
-- backend/bm25 holds the code and CSV outputs used to construct and evaluate BM25 rankings.
+The backend dynamically routes user queries to BM25 **or** ModernBERT based on UI selection.
 
-- data/raw and data/processed (at the project root) provide a local mirror of the data pipeline stages.
+### **Attribute + Context Ranking**
+To counteract popularity bias, we built a scoring layer that integrates:
+- **Attribute matching** (geographic type, cultural tags, experience tags)  
+- **Context cues** such as “hidden gem,” “locals only,” “underrated”  
+- **Query overlap**  
 
-To support collaboration and scalability, we integrated AWS S3 as our primary storage for travel blog data and processed datasets. Raw and processed files such as travel_blogs.csv and BM25 top-location outputs are uploaded to S3 and mirrored in the local data directory. Access is controlled via IAM credentials loaded from environment variables (e.g., through .env and dotenv), which allows Dockerized services to read the same datasets regardless of where they run. This cloud-based storage pattern reduces friction when working across machines and directly supports the project’s Docker-first development model.
+This reranking layer highlights blog posts that explicitly describe destinations as quiet, local, off-the-path, or crowd-free.
 
-## Containerization and Deployment
-The entire system is containerized: backend/Dockerfile.api defines the FastAPI image, and frontend/Dockerfile.streamlit defines the Streamlit image. Both are orchestrated by docker-compose.yml at the project root and a separate frontend/docker-compose.yml for frontend-only workflows. Building and running with docker compose up --build reliably reproduces the API and UI across environments, with ports exposed on 8081 (API) and 8501 (Streamlit).
+---
 
-In practice, containerization did introduce some challenges, especially around Python packaging and build tooling (e.g., pyproject.toml configuration and including backend modules in builds). Resolving these issues forced our team to clarify the package structure (e.g., backend/src/api, backend/off_the_path/src) and make the build process more explicit. While these details are largely invisible to end users, they are essential for reliable deployment and are a meaningful part of the project’s engineering learning outcomes.
+## 2. ModernBERT Embeddings & FAISS Vector Search
 
-## Limitations and Future Directions
-Despite its strengths, the system has several limitations:
+A key enhancement was a dedicated semantic search pipeline (`backend/bert`):
 
-- Corpus dependency: Recommendations are constrained by the blogs in our dataset; regions with sparse coverage will remain underrepresented.
+1. **Preprocess blog text**  
+2. **Generate ModernBERT embeddings** (`nomic-ai/modernbert-embed-base`)  
+3. **Store embeddings** in `.pt` format  
+4. **Load vectors** into a FAISS L2 index at runtime  
+5. **Embed queries** on the fly  
+6. **Retrieve nearest-neighbor blog chunks** by semantic similarity  
 
-- LLM cost and latency: The explanation layer depends on external LLM inference, which introduces latency and requires careful API key management.
+This dramatically improved the recommender’s ability to interpret flexible, natural language queries.
 
-- Popularity estimation: Popularity is proxied by blog frequency, which only approximates real-world tourism pressure.
+---
 
-Future work could explore embedding-based retrieval (e.g., vector search over sentence embeddings), learning-to-rank approaches that jointly optimize attribute and context signals, and tighter integration between S3-hosted data, MLflow experiments, and deployment scripts in deployment/. At the front-end level, we could extend personalization by adding user profiles or history-aware recommendations.
+## 3. Offline Processing Pipeline
 
-Overall, the project demonstrates that combining classical IR, structured attributes, popularity corrections, LLM explanations, and a thoughtfully designed UI—backed by Docker and AWS can produce a compelling prototype for discovering truly off-the-beaten-path travel destinations.
+Before deployment, a full offline workflow transforms raw data into structured, searchable form.
+
+| Stage | Purpose |
+|-------|---------|
+| **Scraping** | Collect travel blog pages using BeautifulSoup + SerpAPI |
+| **Cleaning** | Strip HTML noise, normalize text, drop irrelevant content |
+| **Feature Engineering** | Named entity recognition, metadata extraction, text chunking |
+| **Embedding Generation** | Convert text into ModernBERT dense vector embeddings |
+
+Outputs include:
+- Clean metadata stored in **Postgres**
+- Embeddings stored in **S3 / object storage**
+- Local mirrors under `data/raw` and `data/processed`
+
+This separation between **offline preprocessing** and **online inference** ensures fast and scalable search during runtime.
+
+---
+
+## 4. Storage & Cloud Architecture
+
+The system uses a dual-storage design:
+
+### **Postgres**
+Stores:
+- Titles  
+- Summaries  
+- URLs  
+- Authors  
+- Structured metadata  
+
+Used for context and UI display.
+
+### **S3 Object Storage**
+Stores:
+- ModernBERT embeddings  
+- Processed blog datasets  
+- BM25 evaluation outputs  
+
+AWS credentials are loaded from environment variables, enabling containerized services to consistently access cloud data across machines.
+
+---
+
+## 5. End-to-End Runtime Flow
+
+The runtime architecture includes a **Streamlit frontend**, a **FastAPI backend**, and **AWS-hosted data**.
+
+### **Frontend (Streamlit UI)**
+- Guided input for structured and descriptive queries  
+- Model switcher (BM25 vs. ModernBERT)  
+- Card-style destination results  
+- pydeck-powered interactive world map  
+- Diagnostics tab for transparency  
+
+### **Backend (FastAPI)**
+- Receives search requests  
+- Runs BM25 or ModernBERT retrieval  
+- Optionally applies Attribute+Context reranking  
+- Generates LLM explanations  
+- Returns structured results with scores, metadata, and coordinates  
+
+### **User Flow Summary**
+1. User submits query  
+2. Backend selects retrieval engine  
+3. Candidates are retrieved  
+4. Reranking adjusts for authenticity  
+5. LLM explanation is produced  
+6. UI displays destinations, map markers, and diagnostics  
+
+---
+
+## 6. LLM Explanations: Interpretable Recommendations
+
+To enhance interpretability, we integrated a **language-model explanation layer**.
+
+Given:
+- The user query  
+- Relevant blog snippets  
+- Destination metadata  
+
+The system generates a short, human-readable justification. Example:
+
+> “This destination fits your interest in quiet coastal experiences, with blog references to secluded beaches and early-morning markets away from crowds.”
+
+These explanations:
+- Improve user trust  
+- Help diagnose ranking behavior  
+- Make results feel curated and personalized  
+
+---
+
+## 7. Frontend Design & UX Improvements
+
+We made several UX decisions to improve usability:
+
+### **Structured Query Prompts**
+Instead of one long text box, users provide:
+- Desired vibe  
+- Activities  
+- Geographic preferences  
+- Filters and tags  
+
+These are combined into a rich query for better retrieval.
+
+### **Card-Style Result Layout**
+Each card includes:
+- Score & confidence  
+- Destination name  
+- Tags  
+- Snippet preview  
+- Source link  
+
+### **Interactive Map**
+A global pydeck map visualizes:
+- Coordinates of destinations  
+- Relevance score via color  
+
+### **Diagnostics Tab**
+Reveals:
+- Resolved filters  
+- Model parameters  
+- Reranking settings  
+
+This adds transparency and makes evaluation easier.
+
+---
+
+## 8. Containerization & Deployment
+
+The entire system is Dockerized.
+
+- `backend/Dockerfile.api` → FastAPI service  
+- `frontend/Dockerfile.streamlit` → Streamlit UI  
+- `docker-compose.yml` → Multi-service orchestration  
+
+Running:
+
+```bash
+docker-compose up --build
+
+```
+starts:
+- API on 8081
+- UI on 8501
+
+This ensured reproducibility and simplified team development across different environments.
+
+---
+## 9. Limitations
+
+Despite strong performance, the system has several constraints:
+
+- Corpus Coverage: Recommendations reflect only the regions represented in our blog dataset.
+- LLM Latency & Cost: Explanations rely on a hosted LLM with nontrivial inference cost.
+- Popularity Approximation: Frequency in blogs is only a proxy for real-world tourism pressure.
+- Model Dependency: ModernBERT’s quality depends on the domains it was trained on.
+
+---
+## 10. Future Work
+
+Potential extensions include:
+
+- Full learning-to-rank models combining BM25, ModernBERT, and context cues
+- Personalized recommendations via user profiles
+- Popularity modeling with Google Trends
+- On-device caching for faster embedding inference
+- MLflow integration and more robust experiment tracking
+- Enhanced geographic storytelling in the UI
+
+# Conclusion
+
+This project demonstrates that blending classical IR, semantic embeddings, structured attributes, popularity correction, LLM explanations, and a polished UI all deployed through Docker and supported by AWS can produce a compelling prototype for discovering truly off-the-beaten-path travel destinations.
+
+The system doesn’t just search:
+- It interprets.
+- It explains.
+And most importantly, it helps travelers find places worth discovering.
