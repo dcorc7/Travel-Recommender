@@ -108,7 +108,12 @@ dev = [
 #Repository = "https://github.com/trevoradriaanse/anythings-pawsible"
 #Issues = "https://github.com/trevoradriaanse/anythings-pawsible/issues"
 
+[tool.hatch.build]
+sources = ["backend/src"]
+
 [tool.hatch.build.targets.wheel]
+packages = ["off_the_path.src"]
+
 packages = ["backend/src"]
 
 [tool.black]
