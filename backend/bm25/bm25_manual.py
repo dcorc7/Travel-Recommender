@@ -6,7 +6,6 @@ import re
 import csv
 import argparse
 import os
-import sys
 
 # Increase CSV field size (Windows-safe)
 csv.field_size_limit(2**31 - 1)

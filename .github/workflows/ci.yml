@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # define operating system
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3   # access the repo
+
+      - name: Set up Python
+        uses: actions/setup-python@v4   # install Python
+        with:
+          python-version: '3.10'  # specify Python version
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: poetry install   # install our package
+
+      - name: Run tests
+        run: poetry run pytest   # run tests
+
+      - name: Run ruff linter   # Run ruff linter to check code formatting and style
+        run: poetry run ruff check deduplication/src/
+
+      # Build Sphinx documentation
+      # Generates HTML documentation from docstrings and .rst files in the docs/ folder
+      - name: Build documentation
+        run: poetry run make html --directory docs/

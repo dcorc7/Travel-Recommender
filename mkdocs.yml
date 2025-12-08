@@ -1,0 +1,18 @@
+site_name: Off The Beaten Path Travel Recommender
+repo_url: https://github.com/med2106/dsan6700_app_dev_project/
+theme:
+  name: material
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["backend/src"]   # autogenerates docs from your package
+nav:
+  - Home: index.md
+  - Installation & Run Guide: installation.md
+  - Usage: usage.md
+  - System Architecture: architecture.md
+  - Models: models.md
+  - API Reference:
+      - BM25 Utils: api/bm25_utils.md
+      - ModernBERT Utils: api/bert_utils.md

@@ -1,45 +1,44 @@
 import logging
-from sqlalchemy import create_engine
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column,relationships
-from sqlalchemy import Column, Integer, String, Date
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-from dotenv import load_dotenv
-import os
-
-# Load environment variables
-load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-def db_connect_logging():
-    engine = create_engine(DATABASE_URL)
-
-    class Base(DeclarativeBase):
-        pass
-
-    class Logging(Base):
-
-        __tablename__ = "app_logs"
-
-        id: Mapped[int] = mapped_column(primary_key=True)
-        log_date: Mapped[Date] = mapped_column(unique=True, nullable=False)
-        content: Mapped[str]
-
-        def __repr__(self) -> str:
-            return f"Log(id={self.id!r}, , date={self.log_date!r}, content={self.content!r}"
-
-    # This actually creates the table
-    Base.metadata.create_all(engine)
-
-    return engine, Logging
+import json
+import sys
+from datetime import datetime, timezone
 
 
-def main():
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s - %(levelname)s - %(message)s")
-    logger = logging.getLogger("travel-data")
+class JsonFormatter(logging.Formatter):
+    """
+    Outputs JSON-formatted logs suitable for Docker, Elastic, Loki, etc.
+    """
+    def format(self, record):
+        log_record = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "module": record.module,
+            "funcName": record.funcName,
+            "lineNo": record.lineno,
+        }
+
+        if hasattr(record, "props"):
+            log_record.update(record.props)
+
+        if record.exc_info:
+            log_record["exception"] = self.formatException(record.exc_info)
+
+        return json.dumps(log_record)
+
+
+def get_logger(name: str) -> logging.Logger:
+    logger = logging.getLogger(name)
+
+    # Prevent duplicate handlers in Docker/Gunicorn/etc.
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(JsonFormatter())
+        handler.setLevel(logging.INFO)
+
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+
     return logger
-
-if __name__ == "__main__":
-    main()

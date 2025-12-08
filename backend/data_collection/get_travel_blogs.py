@@ -82,8 +82,8 @@ def get_wordpress_pages(base_url: str) -> List[str]:
 
     # find all links on page and store in a list
     links = soup.find_all('url')
-    for l in links:
-        loc = l.find('loc')
+    for link in links:
+        loc = link.find('loc')
         if loc:
             all_pages.append(loc.text)
     return all_pages
@@ -133,7 +133,7 @@ def get_blog_post_data(page_url: str) -> Dict:
 def filter_links(links: List[str]) -> List[str]:
     """Remove non-article pages such as contact or privacy."""
     banned = ["privacy", "about", "contact", "terms", "policy", "wp-json"]
-    return [l for l in links if not any(b in l.lower() for b in banned)]
+    return [link for link in links if not any(b in link.lower() for b in banned)]
 
 def main():
     parser = argparse.ArgumentParser(description="Scrape travel blogs into a corpus")
