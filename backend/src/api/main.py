@@ -163,7 +163,7 @@ def bm25_search(req: SearchRequest) -> List[Result]:
         
         # Calculate confidence based on score (normalize to 0-1)
         # BM25 scores are unbounded, so we use a sigmoid-like function
-        confidence = min(1.0, r["score"] / 10.0)  # Adjust divisor based on your score range
+        confidence = min(1.0, r["score"] / 10.0)
         
         results.append(
             Result(
@@ -197,7 +197,7 @@ def faiss_search(req: SearchRequest) -> List[Result]:
     logger.info(f"Executing FAISS search for query: '{req.query}'")
     
     # Call the FAISS utility function
-    raw_results = search_modernbert(req.query, top_n = req.retrieval.k)
+    raw_results = search_modernbert(req.query, top_k = req.retrieval.k)
     
     logger.info(f"FAISS found {len(raw_results)} raw results")
 
@@ -211,7 +211,8 @@ def faiss_search(req: SearchRequest) -> List[Result]:
             snippets.append(r["content_preview"])
         
         # Calculate confidence based on score (normalize to 0-1)
-        confidence = min(1.0, r["score"] / 10.0)  # Adjust divisor based on your score range
+        # confidence = min(1.0, r["score"] / 10.0)
+        confidence = 0
         
         results.append(
             Result(
@@ -219,8 +220,10 @@ def faiss_search(req: SearchRequest) -> List[Result]:
                 country = r.get("country", ""),
                 lat = r.get("lat"),
                 lon = r.get("lon"),
-                score = round(r["score"], 4),
-                confidence = round(confidence, 4),
+                # score = round(r["score"], 4),
+                # confidence = round(confidence, 4),
+                score = 0,
+                confidence = 0,
                 trend_delta = None,
                 tags = [],  # BM25 results don't have structured tags
                 context_cues = {},
@@ -244,7 +247,7 @@ def faiss_search(req: SearchRequest) -> List[Result]:
 @app.get("/health")
 def health():
     return {
-        "status": "ok",
+        "status": f"ok {BM25_AVAILABLE} {FAISS_AVAILABLE}",
         "bm25_model_available": BM25_AVAILABLE,
         "faiss_search_available": FAISS_AVAILABLE,
     }
