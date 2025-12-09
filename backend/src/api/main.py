@@ -74,9 +74,6 @@ async def startup_event():
 # ----------------------------
 # Models
 # ----------------------------
-class Filters(BaseModel):
-    min_confidence: float = 0.0
-
 
 class Retrieval(BaseModel):
     model: str = Field(pattern="^(bm25|faiss)$")
@@ -85,7 +82,6 @@ class Retrieval(BaseModel):
 
 class SearchRequest(BaseModel):
     query: str
-    filters: Filters
     retrieval: Retrieval
     ui: Optional[Dict] = None
 
@@ -95,10 +91,9 @@ class Result(BaseModel):
     country: str
     lat: Optional[float] = None
     lon: Optional[float] = None
-    score: float
-    confidence: Optional[float] = None
+    score: Optional[float] = None
+    distance: Optional[float] = None
     trend_delta: Optional[float] = None
-    tags: List[str] = []
     context_cues: Dict[str, Dict[str, int]] = {}
     snippets: List[str] = []
     full_content: str
@@ -161,10 +156,6 @@ def bm25_search(req: SearchRequest) -> List[Result]:
         if r.get("content_preview"):
             snippets.append(r["content_preview"])
         
-        # Calculate confidence based on score (normalize to 0-1)
-        # BM25 scores are unbounded, so we use a sigmoid-like function
-        confidence = min(1.0, r["score"] / 10.0)
-        
         results.append(
             Result(
                 destination = r["destination"],
@@ -172,9 +163,7 @@ def bm25_search(req: SearchRequest) -> List[Result]:
                 lat = r.get("lat"),
                 lon = r.get("lon"),
                 score = round(r["score"], 4),
-                confidence = round(confidence, 4),
                 trend_delta = None,
-                tags = [],  # BM25 results don't have structured tags
                 context_cues = {},
                 snippets = snippets[:2],  # Limit to 2 snippets
                 full_content = r.get('full_content'),
@@ -210,22 +199,14 @@ def faiss_search(req: SearchRequest) -> List[Result]:
         if r.get("content_preview"):
             snippets.append(r["content_preview"])
         
-        # Calculate confidence based on score (normalize to 0-1)
-        # confidence = min(1.0, r["score"] / 10.0)
-        confidence = 0
-        
         results.append(
             Result(
                 destination = r["destination"],
                 country = r.get("country", ""),
                 lat = r.get("lat"),
                 lon = r.get("lon"),
-                # score = round(r["score"], 4),
-                # confidence = round(confidence, 4),
-                score = 0,
-                confidence = 0,
+                distance = round(r["distance"], 4),
                 trend_delta = None,
-                tags = [],  # BM25 results don't have structured tags
                 context_cues = {},
                 snippets = snippets[:2],  # Limit to 2 snippets
                 full_content = r.get('full_content'),
@@ -268,7 +249,6 @@ def search(req: SearchRequest):
         return SearchResponse(
             query = req.query,
             params = {
-                "filters": req.filters.model_dump(),
                 "retrieval": req.retrieval.model_dump(),
                 "model_used": "bm25",
             },
@@ -283,7 +263,6 @@ def search(req: SearchRequest):
         return SearchResponse(
             query = req.query,
             params = {
-                "filters": req.filters.model_dump(),
                 "retrieval": req.retrieval.model_dump(),
                 "model_used": "faiss",
             },

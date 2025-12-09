@@ -75,8 +75,6 @@ q = f"{q1}. {q2}. {q3}"
 c1, c2 = st.sidebar.columns(2)
 with c1:
     k = st.number_input("Results", 3, 50, 12, 1)
-with c2:
-    min_conf = st.slider("Min confidence", 0.0, 1.0, 0.0, 0.05)
 
 run = st.sidebar.button("🔎 Run search", use_container_width=True)
 
@@ -119,9 +117,6 @@ def payload() -> Dict[str, Any]:
     )
     return {
         "query": q.strip(),
-        "filters": {
-            "min_confidence": float(min_conf),
-        },
         "retrieval": {
             "model": m,
             "k": int(k),
@@ -143,15 +138,6 @@ def render_result_card(r: Dict[str, Any], i: int):
             f'<p class="subtitle">{r.get("country","")}</p>',
             unsafe_allow_html=True,
         )
-
-
-        # Tag pills
-        tags = r.get("tags", [])
-        if tags:
-            st.markdown(
-                " ".join([f'<span class="pill">{t}</span>' for t in tags]),
-                unsafe_allow_html=True,
-            )
 
         # Snippets
         for s in r.get("snippets", [])[:2]:
@@ -179,12 +165,16 @@ def render_result_card(r: Dict[str, Any], i: int):
 
     with right:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        chips = [
-            score_chip("Score", f"{r.get('score',0):.2f}"),
-            score_chip("Confidence", f"{r.get('confidence',0):.2f}"),
-        ]
+        chips = []
+        score = r.get("score")
+        if isinstance(score, (int, float)) and score > 0:
+            chips.append(score_chip("Score", f"{score:.2f}"))
+        distance = r.get("distance")
+        if isinstance(distance, (int, float)) and distance > 0:
+            chips.append(score_chip("Distance", f"{distance:.2f}"))
+
         st.markdown(" ".join(chips), unsafe_allow_html=True)
-        # st.caption("Why this destination surfaced")
+        st.link_button("Go to Blog Post", r.get("why", {}).get("page_url", ""))
         with st.expander("See full scoring breakdown", expanded=False):
             st.json(r.get("why", {}))
         st.markdown("</div>", unsafe_allow_html=True)
@@ -196,7 +186,7 @@ if "response" not in st.session_state:
 
 if run and q.strip():
     request_id = str(uuid.uuid4())
-    logger.info(f"User search initiated: query='{q}', request_id='{request_id}', filters={{'k': {k}, 'min_conf': {min_conf}, 'model': '{model}'}}")
+    logger.info(f"User search initiated: query='{q}', request_id='{request_id}', retrieval={{'k': {k}, 'model': '{model}'}}")
     
     with st.spinner("Searching blogs and ranking destinations…"):
         try:
@@ -233,21 +223,26 @@ with tabs[0]:
         res_list = results
         if res_list:
             scores = [r.get("score", 0) for r in res_list]
-            confs = [r.get("confidence", 0) for r in res_list]
+            distances = [r.get("distance", 0) for r in res_list]
+            
+            scores = [s for s in scores if s not in (None, "")]
+            distances = [d for d in distances if d not in (None, "")]
 
-            m1, m2, m3 = st.columns(3)
+            m1, m2 = st.columns(2)
             with m1:
                 st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-                st.metric("Destinations returned", len(res_list))
+                st.metric("Destinations Returned", len(res_list))
                 st.markdown("</div>", unsafe_allow_html=True)
             with m2:
                 st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-                st.metric("Average score", f"{sum(scores)/len(scores):.2f}")
-                st.markdown("</div>", unsafe_allow_html=True)
-            with m3:
-                st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-                st.metric("Average confidence", f"{sum(confs)/len(confs):.2f}")
-                st.markdown("</div>", unsafe_allow_html=True)
+                if scores:
+                    st.metric("Average Score", f"{sum(scores)/len(scores):.2f}")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                if sum(distances) > 0:
+                    st.metric("Average Distance", f"{sum(distances)/len(distances):.4f}")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                # else:
+                #     st.markdown("</div>", unsafe_allow_html=True)
 
             st.caption(
                 f"Showing top {len(res_list)} results for: “{response.get('query','')}”"
@@ -255,7 +250,7 @@ with tabs[0]:
             for i, r in enumerate(res_list, start=1):
                 render_result_card(r, i)
         else:
-            st.info("No results were returned. Try relaxing your filters or lowering the minimum confidence.")
+            st.info("No results were returned.")
 
 
 # Map tab 
@@ -263,6 +258,11 @@ with tabs[1]:
     if not results:
         st.info("Run a search first to populate the map.")
     else:
+        if r.get("score") is not None:
+            SCORE_TRUE = True
+        else:
+            SCORE_TRUE = False
+
         df = pd.DataFrame(
             [
                 {
@@ -270,8 +270,8 @@ with tabs[1]:
                     "country": r.get("country", ""),
                     "lat": r.get("lat"),
                     "lon": r.get("lon"),
-                    "score": r.get("score"),
-                    "confidence": r.get("confidence"),
+                    # "score": r.get("score"),
+                    "score": r.get("score") if r.get("score") is not None else r.get("distance"),
                 }
                 for r in response.get("results", [])
                 if r.get("lat") is not None and r.get("lon") is not None
@@ -285,15 +285,21 @@ with tabs[1]:
             max_score = df["score"].max()
             score_range = max_score - min_score if max_score != min_score else 1
 
-            def relative_score_to_color(score):
+            def relative_score_to_color(score, reverse=False):
                 relative = (score - min_score) / score_range
+                # if distances, flip color
+                if reverse:
+                    relative = 1 - relative 
                 r = int(255 * (1 - relative))
                 g = int(255 * relative)
                 b = 0
                 a = 160
                 return [r, g, b, a]
 
-            df["color"] = df["score"].apply(relative_score_to_color)
+            if SCORE_TRUE:
+                df["color"] = df["score"].apply(relative_score_to_color, reverse = False)
+            else:
+                df["color"] = df["score"].apply(relative_score_to_color, reverse = True)
 
             layer = pdk.Layer(
                 "ScatterplotLayer",
@@ -313,17 +319,18 @@ with tabs[1]:
                 zoom=2.5,
             )
 
-            st.pydeck_chart(
-                pdk.Deck(
-                    layers=[layer],
-                    initial_view_state=vs,
-                    tooltip={
-                        "text": "{destination}\n{country}\nscore: {score}\nconf: {confidence}"
-                    },
+            if SCORE_TRUE == True:
+                st.pydeck_chart(
+                    pdk.Deck(
+                        layers=[layer],
+                        initial_view_state=vs,
+                        tooltip={
+                            "text": "{destination}\n{country}\nScore: {score}\n"
+                        },
+                    )
                 )
-            )
 
-            st.markdown(
+                st.markdown(
                 """
             <div class="map-legend">
                 <div class="map-legend-swatch" style="background-color:rgb(255,0,0);"></div> Lower score
@@ -333,6 +340,27 @@ with tabs[1]:
             """,
                 unsafe_allow_html=True,
             )
+            else:
+                st.pydeck_chart(
+                    pdk.Deck(
+                        layers=[layer],
+                        initial_view_state=vs,
+                        tooltip={
+                            "text": "{destination}\n{country}\nDistance: {score}\n"
+                        },
+                    )
+                )
+                st.markdown(
+                """
+            <div class="map-legend">
+                <div class="map-legend-swatch" style="background-color:rgb(0,255,0);"></div> Lower distance
+                <div class="map-legend-swatch" style="background-color:rgb(255,165,0);"></div> Medium distance
+                <div class="map-legend-swatch" style="background-color:rgb(255,0,0);"></div> Higher distance
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
 
 # Explanations tab
 with tabs[2]:

@@ -10,7 +10,6 @@ load_dotenv()
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODEL_NAME = "nomic-ai/modernbert-embed-base"
-# EMBEDDINGS_PATH = "../../../backend/bert/travel_blog_embeddings.pt"
 EMBEDDINGS_PATH = "travel_blog_embeddings.pt"
 
 # -----------------------------
@@ -39,7 +38,6 @@ class Whole_Blogs(Base):
     latitude: Mapped[float]
     longitude: Mapped[float]
     content: Mapped[str]
-    # embeddings: 
 
 # -----------------------------
 # Cache

@@ -32,7 +32,7 @@ def build_prompt(query, blog_post):
     And the returned neighbor (blog post about travel): {blog_post}
 
     Explain in clear, human terms why this vacation location is a good option for the user to consider given their request query.
-    The response should be a maximum of 8 sentances.
+    Please reiterate the name of the location, being as specific as possible. The response should be a maximum of 8 sentances.
     """
     return prompt.strip()
 
