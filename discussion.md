@@ -6,7 +6,86 @@ To do this, we combined **traditional IR**, **semantic vector retrieval**, **str
 
 ---
 
-## 1. Retrieval Models: Lexical, Semantic, and Hybrid Reasoning
+## 1 Exploratory Data Analysis
+
+Upon conducting exploratory data analysis on our dataset, we summarize key insights from the travel-blog dataset (7,441 blog pages), focusing on geographic patterns, topical concentration, sentiment patterns, and writing behavior. The dataset includes blog metadata (title, URL, description, author) as well as core analytical fields such as location names, latitude/longitude, and full page content, enabling both geographic and textual exploration.
+
+### Dataset Structure and Metadata Overview
+
+Key metadata patterns include:
+
+- **Unique Locations:** 2,061 place names extracted.
+- **Blog Diversity:** 60 unique blog domains contribute to the dataset, though a handful of high-volume blogs account for a large share of posts.
+- **Author Field:** Nearly all pages share a single aggregated “author” value due to limitations in WordPress metadata extraction.
+- **Coordinates:** Lat/lon values are available for all entries, enabling precise geospatial mapping.
+- **Content Field:** Nearly all posts include full, untruncated content suitable for NLP tasks (topic modeling, keyword extraction, summarization).
+
+**Selected Summary Statistics**
+
+| Metric                 | Value                               |
+| ---------------------- | ----------------------------------- |
+| Total Blogs            | 7,441                               |
+| Unique Locations       | 2,061                               |
+| Top Location           | Singapore (152 mentions)            |
+| Most Frequent Blog URL | bobbymgsk.wordpress.com (463 posts) |
+
+
+### Geographic Distribution of Blogs
+
+**Continent-Level Representation**
+
+![Blog Counts by Continent](./eda/img/blogs_per_continent.png){width=70%}
+
+The dataset spans all major world regions, but blog activity is far from evenly distributed.
+The bar chart below shows that:
+
+- North America and Europe dominate travel writing volume, together accounting for over half of all entries.
+- Asia follows as a strong third region.
+- Africa, Oceania, and South America appear less frequently.
+- A small number of posts have unknown or unmapped coordinates.
+
+This skew indicates a strong bias toward Western and well-developed tourism ecosystems.
+
+**Global Coverage Map**
+
+![Blog Distribution on Global Map](./eda/img/geo_map.png){width=70%}
+
+Plotting all blog coordinates on a world map reveals clusterings of posts around:
+
+- The U.S. East Coast, western Europe (especially the UK, France, Germany),
+- Japan, Southeast Asia, and Australia,
+- With lighter but noticeable contributions across Latin America and Africa.
+
+The map highlights how strongly travel blogging centers around easily accessible, popular, and tourism-heavy destinations.
+
+### Most Written-About Locations
+
+![Blog Distribution on Global Map](./eda/img/location_frequency.png){width=70%}
+
+Across 2,061 unique locations, a small subset receives disproportionate attention.
+
+The top 15 most frequently mentioned places include:
+
+- Singapore (largest count)
+- Paris, Europe, Asia, Germany, London
+- Highly touristed countries: France, Italy, Japan
+- Major cities like Barcelona, New York, Sydney
+- Strong regional identifiers such as Scotland, Canada
+
+These counts reveal two patterns:
+
+1. Global cities and cultural capitals dominate, reflecting common bucket-list travel behavior.
+2. Broad geographic labels (e.g., Europe, Asia) are used frequently, suggesting many posts focus on multi-country itineraries.
+
+### Blog Tone and Sentiment
+
+![Blog Distribution on Global Map](./eda/img/sentiment_dist.png){width=70%}
+
+Sentiment analysis on the blog content shows a strongly positive skew. Most sentiment scores cluster around 0.15–0.25, reflecting overall upbeat, inspirational, and reflective travel writing. Only a small percentage of posts express negativity—typically related to travel mishaps, warnings, or comparisons of expectations vs. reality. The bell-shaped distribution indicates that despite stylistic differences across authors, travel blogs generally maintain a consistently positive narrative tone.
+
+---
+
+## 2. Retrieval Models: Lexical, Semantic, and Hybrid Reasoning
 
 The system supports two complementary retrieval engines:
 
@@ -39,7 +118,7 @@ This reranking layer highlights blog posts that explicitly describe destinations
 
 ---
 
-## 2. ModernBERT Embeddings & FAISS Vector Search
+## 3. ModernBERT Embeddings & FAISS Vector Search
 
 A key enhancement was a dedicated semantic search pipeline (`backend/bert`):
 
@@ -54,7 +133,7 @@ This dramatically improved the recommender’s ability to interpret flexible, na
 
 ---
 
-## 3. Offline Processing Pipeline
+## 4. Offline Processing Pipeline
 
 Before deployment, a full offline workflow transforms raw data into structured, searchable form.
 
@@ -74,7 +153,7 @@ This separation between **offline preprocessing** and **online inference** ensur
 
 ---
 
-## 4. Storage & Cloud Architecture
+## 5. Storage & Cloud Architecture
 
 The system uses a dual-storage design:
 
@@ -98,7 +177,7 @@ AWS credentials are loaded from environment variables, enabling containerized se
 
 ---
 
-## 5. End-to-End Runtime Flow
+## 6. End-to-End Runtime Flow
 
 The runtime architecture includes a **Streamlit frontend**, a **FastAPI backend**, and **AWS-hosted data**.
 
@@ -126,7 +205,7 @@ The runtime architecture includes a **Streamlit frontend**, a **FastAPI backend*
 
 ---
 
-## 6. LLM Explanations: Interpretable Recommendations
+## 7. LLM Explanations: Interpretable Recommendations
 
 To enhance interpretability, we integrated a **language-model explanation layer**.
 
@@ -146,7 +225,7 @@ These explanations:
 
 ---
 
-## 7. Frontend Design & UX Improvements
+## 8. Frontend Design & UX Improvements
 
 We made several UX decisions to improve usability:
 
@@ -182,7 +261,7 @@ This adds transparency and makes evaluation easier.
 
 ---
 
-## 8. Containerization & Deployment
+## 9. Containerization & Deployment
 
 The entire system is Dockerized.
 
@@ -203,7 +282,7 @@ starts:
 This ensured reproducibility and simplified team development across different environments.
 
 ---
-## 9. Limitations
+## 10. Limitations
 
 Despite strong performance, the system has several constraints:
 
@@ -213,7 +292,7 @@ Despite strong performance, the system has several constraints:
 - Model Dependency: ModernBERT’s quality depends on the domains it was trained on.
 
 ---
-## 10. Future Work
+## 11. Future Work
 
 Potential extensions include:
 
