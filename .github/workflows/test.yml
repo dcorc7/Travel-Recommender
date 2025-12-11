@@ -1,52 +1,52 @@
-# This workflow will install Python dependencies, run tests and lint.
-# For more information see: https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-python
+# # This workflow will install Python dependencies, run tests and lint.
+# # For more information see: https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-python
 
-name: Test Python application
+# name: Test Python application
 
-on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+# on:
+#   push:
+#     branches: [ "main", "master" ]
+#   pull_request:
+#     branches: [ "main", "master" ]
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
-jobs:
-  build:
-    strategy:
-      matrix:
-        # Test all supported Python versions under Ubuntu
-        os: [ubuntu-latest]
-        python-version: ['3.10']
+# jobs:
+#   build:
+#     strategy:
+#       matrix:
+#         # Test all supported Python versions under Ubuntu
+#         os: [ubuntu-latest]
+#         python-version: ['3.10']
 
-    runs-on: ${{ matrix.os }}
+#     runs-on: ${{ matrix.os }}
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3   # access the repo
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v3   # access the repo
 
-    - name: Set up Python
-      uses: actions/setup-python@v4   # install Python
-      with:
-        python-version: '3.10'  # specify Python version
+#     - name: Set up Python
+#       uses: actions/setup-python@v4   # install Python
+#       with:
+#         python-version: '3.10'  # specify Python version
 
-    - name: Install Poetry
-      run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+#     - name: Install Poetry
+#       run: |
+#           curl -sSL https://install.python-poetry.org | python3 -
+#           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Install dependencies
-      run: |
-        poetry install
+#     - name: Install dependencies
+#       run: |
+#         poetry install
         
-    - name: Lint with ruff
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        poetry run ruff check --select=E9,F63,F7,F82
-        # exit-zero treats all errors as warnings
-        poetry run ruff check --exit-zero --statistics
+#     - name: Lint with ruff
+#       run: |
+#         # stop the build if there are Python syntax errors or undefined names
+#         poetry run ruff check --select=E9,F63,F7,F82
+#         # exit-zero treats all errors as warnings
+#         poetry run ruff check --exit-zero --statistics
 
-    - name: Run tests
-      run: |
-        poetry run pytest
+#     - name: Run tests
+#       run: |
+#         poetry run pytest

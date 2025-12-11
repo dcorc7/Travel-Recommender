@@ -4,7 +4,7 @@ import re
 import os
 from typing import List, Dict
 from rank_bm25 import BM25Okapi
-from sqlalchemy import create_engine, Float, ARRAY
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column
 from dotenv import load_dotenv
 # Import Logger

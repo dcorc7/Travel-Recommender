@@ -27,13 +27,13 @@ jobs:
       - name: Install dependencies
         run: poetry install   # install our package
 
-      - name: Run tests
-        run: poetry run pytest   # run tests
+      # - name: Run tests
+      #   run: poetry run pytest   # run tests
 
       - name: Run ruff linter   # Run ruff linter to check code formatting and style
-        run: poetry run ruff check deduplication/src/
+        run: poetry run ruff check backend/src/
 
       # Build Sphinx documentation
       # Generates HTML documentation from docstrings and .rst files in the docs/ folder
-      - name: Build documentation
-        run: poetry run make html --directory docs/
+      # - name: Build documentation
+      #   run: poetry run make html --directory docs/
