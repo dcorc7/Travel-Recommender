@@ -30,6 +30,9 @@ jobs:
       # - name: Run tests
       #   run: poetry run pytest   # run tests
 
+      - name: Install Ruff
+        run: pip install ruff
+
       - name: Run ruff linter   # Run ruff linter to check code formatting and style
         run: ruff check backend/src/
 
