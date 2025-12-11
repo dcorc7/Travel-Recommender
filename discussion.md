@@ -34,7 +34,9 @@ Key metadata patterns include:
 
 **Continent-Level Representation**
 
-![Blog Counts by Continent](./eda/img/blogs_per_continent.png){width=70%}
+<div style="text-align:center;">
+  <img src="./eda/img/blogs_per_continent.png" width="70%">
+</div>
 
 The dataset spans all major world regions, but blog activity is far from evenly distributed.
 The bar chart below shows that:
@@ -48,7 +50,9 @@ This skew indicates a strong bias toward Western and well-developed tourism ecos
 
 **Global Coverage Map**
 
-![Blog Distribution on Global Map](./eda/img/geo_map.png){width=70%}
+<div style="text-align:center;">
+  <img src="./eda/img/geo_map.png" width="70%">
+</div>
 
 Plotting all blog coordinates on a world map reveals clusterings of posts around:
 
@@ -60,7 +64,10 @@ The map highlights how strongly travel blogging centers around easily accessible
 
 ### Most Written-About Locations
 
-![Blog Distribution on Global Map](./eda/img/location_frequency.png){width=70%}
+<div style="text-align:center;">
+  <img src="./eda/img/location_frequency.png" width="70%">
+</div>
+
 
 Across 2,061 unique locations, a small subset receives disproportionate attention.
 
@@ -79,7 +86,9 @@ These counts reveal two patterns:
 
 ### Blog Tone and Sentiment
 
-![Blog Distribution on Global Map](./eda/img/sentiment_dist.png){width=70%}
+<div style="text-align:center;">
+  <img src="./eda/img/sentiment_dist.png" width="70%">
+</div>
 
 Sentiment analysis on the blog content shows a strongly positive skew. Most sentiment scores cluster around 0.15–0.25, reflecting overall upbeat, inspirational, and reflective travel writing. Only a small percentage of posts express negativity—typically related to travel mishaps, warnings, or comparisons of expectations vs. reality. The bell-shaped distribution indicates that despite stylistic differences across authors, travel blogs generally maintain a consistently positive narrative tone.
 
