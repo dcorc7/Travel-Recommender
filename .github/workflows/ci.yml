@@ -27,8 +27,8 @@ jobs:
       - name: Install dependencies
         run: poetry install   # install our package
 
-      # - name: Run tests
-      #   run: poetry run pytest -v  # run tests
+      - name: Run tests
+        run: poetry run pytest -v  # run tests
 
       - name: Install Ruff
         run: pip install ruff
