@@ -6,7 +6,7 @@ To do this, we combined **traditional IR**, **semantic vector retrieval**, **str
 
 ---
 
-## 1 Exploratory Data Analysis
+## 1. Exploratory Data Analysis
 
 Upon conducting exploratory data analysis on our dataset, we summarize key insights from the travel-blog dataset (7,441 blog pages), focusing on geographic patterns, topical concentration, sentiment patterns, and writing behavior. The dataset includes blog metadata (title, URL, description, author) as well as core analytical fields such as location names, latitude/longitude, and full page content, enabling both geographic and textual exploration.
 
@@ -16,8 +16,7 @@ Key metadata patterns include:
 
 - **Unique Locations:** 2,061 place names extracted.
 - **Blog Diversity:** 60 unique blog domains contribute to the dataset, though a handful of high-volume blogs account for a large share of posts.
-- **Author Field:** Nearly all pages share a single aggregated “author” value due to limitations in WordPress metadata extraction.
-- **Coordinates:** Lat/lon values are available for all entries, enabling precise geospatial mapping.
+- **Coordinates:** Latitiude/longitude values are available for all entries, enabling precise geospatial mapping.
 - **Content Field:** Nearly all posts include full, untruncated content suitable for NLP tasks (topic modeling, keyword extraction, summarization).
 
 **Selected Summary Statistics**
@@ -34,9 +33,9 @@ Key metadata patterns include:
 
 **Continent-Level Representation**
 
-<div style="text-align:center;">
-  <img src="./eda/img/blogs_per_continent.png" width="70%">
-</div>
+<p align="center">
+    <img src="./eda/img/blogs_per_continent.png" width="75%">
+</p>
 
 The dataset spans all major world regions, but blog activity is far from evenly distributed.
 The bar chart below shows that:
@@ -50,9 +49,9 @@ This skew indicates a strong bias toward Western and well-developed tourism ecos
 
 **Global Coverage Map**
 
-<div style="text-align:center;">
-  <img src="./eda/img/geo_map.png" width="70%">
-</div>
+<p align="center">
+    <img src="./eda/img/geo_map.png" width="75%">
+</p>
 
 Plotting all blog coordinates on a world map reveals clusterings of posts around:
 
@@ -64,9 +63,9 @@ The map highlights how strongly travel blogging centers around easily accessible
 
 ### Most Written-About Locations
 
-<div style="text-align:center;">
-  <img src="./eda/img/location_frequency.png" width="70%">
-</div>
+<p align="center">
+    <img src="./eda/img/location_frequency.png" width="75%">
+</p>
 
 
 Across 2,061 unique locations, a small subset receives disproportionate attention.
@@ -86,11 +85,11 @@ These counts reveal two patterns:
 
 ### Blog Tone and Sentiment
 
-<div style="text-align:center;">
-  <img src="./eda/img/sentiment_dist.png" width="70%">
-</div>
+<p align="center">
+    <img src="./eda/img/sentiment_dist.png" width="75%">
+</p>
 
-Sentiment analysis on the blog content shows a strongly positive skew. Most sentiment scores cluster around 0.15–0.25, reflecting overall upbeat, inspirational, and reflective travel writing. Only a small percentage of posts express negativity—typically related to travel mishaps, warnings, or comparisons of expectations vs. reality. The bell-shaped distribution indicates that despite stylistic differences across authors, travel blogs generally maintain a consistently positive narrative tone.
+Sentiment analysis on the blog content shows a strongly positive skew. Most sentiment scores cluster around 0.15–0.25, reflecting overall upbeat, inspirational, and reflective travel writing. Only a small percentage of posts express negativity, typically related to travel mishaps, warnings, or comparisons of expectations vs. reality. The bell-shaped distribution indicates that despite stylistic differences across authors, travel blogs generally maintain a consistently positive narrative tone.
 
 ---
 
