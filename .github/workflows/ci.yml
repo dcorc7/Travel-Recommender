@@ -28,7 +28,7 @@ jobs:
         run: poetry install --all-extras   # install our package
 
       - name: Run tests
-        run: poetry run pytest -v -m "not integration"# run tests
+        run: poetry run pytest -v -m "not integration" # run tests
 
       - name: Install Ruff
         run: pip install ruff
