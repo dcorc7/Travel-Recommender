@@ -15,7 +15,7 @@ def mock_modernbert_db(mocker):
             page_url = "https://example.com/kyoto",
             blog_url = "https://example.com",
             page_author = "Test Author",
-            description = "Kyoto travel",
+            page_description = "Kyoto travel",
             content = "Kyoto temples and shrines are beautiful.",
         )
     ]
