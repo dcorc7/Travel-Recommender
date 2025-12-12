@@ -93,6 +93,7 @@ frontend = [
 # Development dependencies
 dev = [
     "pytest>=7.3.1",
+    "pytest-mock>=3.12.0",
     "ipykernel>=6.29.5",
     "jupyter>=1.0.0",
     "black>=22.0.0",
@@ -153,6 +154,9 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: tests that require a real database or external services",
+]
 
 [tool.coverage.run]
 source = ["src"]
