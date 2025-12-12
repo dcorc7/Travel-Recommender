@@ -8,6 +8,7 @@ def mock_modernbert_db(mocker):
         SimpleNamespace(
             destination = "Kyoto",
             country = "Japan",
+            location_name = "Kyoto, Japan",
             lat = 35.0,
             lon = 135.0,
             page_title = "Kyoto Temples",
