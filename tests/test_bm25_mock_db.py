@@ -1,37 +1,51 @@
 import json
 import pytest
+from rank_bm25 import BM25Okapi
 
 @pytest.fixture
 def mock_bm25_db(mocker):
+    fake_docs = [
+        "Kyoto is known for temples and shrines",
+        "The Dolomites are stunning mountain landscapes",
+    ]
+    tokenized_docs = [doc.lower().split() for doc in fake_docs]
+    fake_bm25 = BM25Okapi(tokenized_docs)
+
     mocker.patch(
         "backend.src.api.bm25_utils._load_blogs_from_db",
         return_value = [
             {
                 "destination": "Kyoto",
                 "country": "Japan",
-                "content": "Kyoto is known for its temples and hidden shrines.",
+                "content": fake_docs[0],
                 "page_title": "Hidden Kyoto",
                 "page_url": "https://example.com/kyoto",
                 "blog_url": "https://example.com",
                 "author": "Test Author",
                 "description": "Kyoto travel blog",
-                "latitude": 35.0116,
-                "longitude": 135.7681,
+                "latitude": 35.0,
+                "longitude": 135.0,
             },
             {
                 "destination": "Dolomites",
                 "country": "Italy",
-                "content": "The Dolomites offer dramatic mountain landscapes.",
+                "content": fake_docs[1],
                 "page_title": "Dolomites Guide",
                 "page_url": "https://example.com/dolomites",
                 "blog_url": "https://example.com",
                 "author": "Test Author",
                 "description": "Mountain travel blog",
-                "latitude": 46.4102,
-                "longitude": 11.8440,
+                "latitude": 46.0,
+                "longitude": 11.8,
             },
         ],
     )
+
+    mocker.patch(
+        "backend.src.api.bm25_utils._cached_bm25",
+        fake_bm25,
+    )
+
 
 def test_bm25_returns_results(queries, run_bm25, mock_bm25_db):
     for q in queries:
