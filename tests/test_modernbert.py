@@ -1,6 +1,9 @@
 import pytest
 from backend.src.api.modern_bert_utils import search_modernbert
 
+pytestmark = pytest.mark.integration
+
+
 @pytest.fixture
 def queries():
     # Replace with a few sample queries for testing

@@ -1,3 +1,8 @@
+import pytest
+
+pytestmark = pytest.mark.integration
+
+
 def test_bm25_returns_results(queries, run_bm25):
     for q in queries:
         results = run_bm25(q)
