@@ -137,6 +137,14 @@ ul.task-list li input[type="checkbox"] {
    
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#what-this-system-does" id="toc-what-this-system-does" class="nav-link" data-scroll-target="#what-this-system-does">What This System Does</a></li>
+  <li><a href="#core-components" id="toc-core-components" class="nav-link" data-scroll-target="#core-components">Core Components</a>
+  <ul class="collapse">
+  <li><a href="#lexical-retrieval-bm25" id="toc-lexical-retrieval-bm25" class="nav-link" data-scroll-target="#lexical-retrieval-bm25">Lexical Retrieval (BM25)</a></li>
+  <li><a href="#semantic-retrieval-modernbert-faiss" id="toc-semantic-retrieval-modernbert-faiss" class="nav-link" data-scroll-target="#semantic-retrieval-modernbert-faiss">Semantic Retrieval (ModernBERT + FAISS)</a></li>
+  <li><a href="#api-layer" id="toc-api-layer" class="nav-link" data-scroll-target="#api-layer">API Layer</a></li>
+  </ul></li>
+  <li><a href="#use-cases" id="toc-use-cases" class="nav-link" data-scroll-target="#use-cases">Use Cases</a></li>
   <li><a href="#github-repository" id="toc-github-repository" class="nav-link" data-scroll-target="#github-repository">Github Repository</a></li>
   </ul>
 </nav>
@@ -169,6 +177,55 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
+<p>Popular travel platforms often optimize for popularity, reinforcing the same well-known destinations and experiences. This project takes a different approach.</p>
+<p>The Off-the-Beaten-Path Travel Recommender is a semantic search and retrieval system designed to surface <em>less-crowded, locally authentic, and contextually relevant</em> travel destinations by learning directly from long-form travel blog content. Instead of relying on predefined destination rankings or user reviews, the system analyzes narrative travel writing to identify places that align with exploratory, low-tourism intent.</p>
+<p>At its core, the project combines traditional information retrieval with modern transformer-based semantic search, exposed through a lightweight API for interactive exploration.</p>
+<hr>
+</section>
+<section id="what-this-system-does" class="level1">
+<h1>What This System Does</h1>
+<ul>
+<li>Searches thousands of travel blog posts describing destinations around the world<br>
+</li>
+<li>Supports both keyword-based and semantic search modes<br>
+</li>
+<li>Captures nuanced intent such as <em>quiet</em>, <em>local</em>, <em>hidden</em>, or <em>underrated</em><br>
+</li>
+<li>Returns destination-level results with geographic metadata and source context<br>
+</li>
+<li>Generates natural-language explanations for why results match a query</li>
+</ul>
+<p>The system is designed to be modular, interpretable, and extensible—making it suitable for research, experimentation, or deployment as a discovery-focused travel tool.</p>
+<hr>
+</section>
+<section id="core-components" class="level1">
+<h1>Core Components</h1>
+<section id="lexical-retrieval-bm25" class="level3">
+<h3 class="anchored" data-anchor-id="lexical-retrieval-bm25">Lexical Retrieval (BM25)</h3>
+<p>A fast, keyword-based baseline search using BM25 scoring. This mode prioritizes direct term overlap and serves as a strong reference point for traditional search behavior.</p>
+</section>
+<section id="semantic-retrieval-modernbert-faiss" class="level3">
+<h3 class="anchored" data-anchor-id="semantic-retrieval-modernbert-faiss">Semantic Retrieval (ModernBERT + FAISS)</h3>
+<p>A transformer-based semantic search pipeline using ModernBERT embeddings indexed with FAISS. This enables retrieval based on meaning rather than exact wording, allowing the system to understand experiential intent and contextual relevance across diverse travel narratives.</p>
+</section>
+<section id="api-layer" class="level3">
+<h3 class="anchored" data-anchor-id="api-layer">API Layer</h3>
+<p>A FastAPI backend exposes a unified <code>/search</code> endpoint, allowing clients to switch between retrieval models with a simple configuration flag. The API returns structured results, excerpts, and optional LLM-generated explanations.</p>
+<hr>
+</section>
+</section>
+<section id="use-cases" class="level1">
+<h1>Use Cases</h1>
+<ul>
+<li>Discovering lesser-known destinations aligned with personal travel style<br>
+</li>
+<li>Comparing lexical vs semantic retrieval behavior<br>
+</li>
+<li>Experimenting with modern NLP techniques in a real-world domain<br>
+</li>
+<li>Serving as a foundation for future recommendation or personalization systems</li>
+</ul>
+<hr>
 </section>
 <section id="github-repository" class="level1">
 <h1>Github Repository</h1>

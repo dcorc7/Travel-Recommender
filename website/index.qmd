@@ -4,7 +4,47 @@ title: Off-the-Beaten-Path Travel Recommender
 
 # Introduction
 
+Popular travel platforms often optimize for popularity, reinforcing the same well-known destinations and experiences. This project takes a different approach.
 
+The Off-the-Beaten-Path Travel Recommender is a semantic search and retrieval system designed to surface *less-crowded, locally authentic, and contextually relevant* travel destinations by learning directly from long-form travel blog content. Instead of relying on predefined destination rankings or user reviews, the system analyzes narrative travel writing to identify places that align with exploratory, low-tourism intent.
+
+At its core, the project combines traditional information retrieval with modern transformer-based semantic search, exposed through a lightweight API for interactive exploration.
+
+---
+
+# What This System Does
+
+- Searches thousands of travel blog posts describing destinations around the world  
+- Supports both keyword-based and semantic search modes  
+- Captures nuanced intent such as *quiet*, *local*, *hidden*, or *underrated*  
+- Returns destination-level results with geographic metadata and source context  
+- Generates natural-language explanations for why results match a query  
+
+The system is designed to be modular, interpretable, and extensible—making it suitable for research, experimentation, or deployment as a discovery-focused travel tool.
+
+---
+
+# Core Components
+
+### Lexical Retrieval (BM25)
+A fast, keyword-based baseline search using BM25 scoring. This mode prioritizes direct term overlap and serves as a strong reference point for traditional search behavior.
+
+### Semantic Retrieval (ModernBERT + FAISS)
+A transformer-based semantic search pipeline using ModernBERT embeddings indexed with FAISS. This enables retrieval based on meaning rather than exact wording, allowing the system to understand experiential intent and contextual relevance across diverse travel narratives.
+
+### API Layer
+A FastAPI backend exposes a unified `/search` endpoint, allowing clients to switch between retrieval models with a simple configuration flag. The API returns structured results, excerpts, and optional LLM-generated explanations.
+
+---
+
+# Use Cases
+
+- Discovering lesser-known destinations aligned with personal travel style  
+- Comparing lexical vs semantic retrieval behavior  
+- Experimenting with modern NLP techniques in a real-world domain  
+- Serving as a foundation for future recommendation or personalization systems  
+
+---
 
 # Github Repository
 

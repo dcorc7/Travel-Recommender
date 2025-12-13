@@ -281,8 +281,6 @@ Choose between:
 **Filters:**
 - **Activity Types**: skiing, hiking, museums, camping, diving, etc.
 - **Geographic Type**: coastal, mountain, island, urban, desert, etc.
-
-**Advanced:**
 - **Results (k)**: Number of destinations to return (3-50)
 
 ### Step 4: View Results

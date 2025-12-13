@@ -2,3 +2,151 @@
 title: Methods
 ---
 
+This project implements a dual-retrieval search system for travel discovery, combining a traditional lexical baseline with a modern semantic embedding pipeline. Both retrieval methods operate over the same cleaned and enriched travel blog corpus and are exposed through a unified API.
+
+---
+
+## Lexical Retrieval: BM25
+
+### Overview
+
+BM25 (Best Match 25) is used as a traditional information retrieval baseline to rank travel blog posts based on term-level relevance between a user query and document text.
+
+This approach prioritizes exact and partial keyword overlap and serves as a strong reference point for evaluating the benefits of semantic retrieval.
+
+---
+
+### Index Construction
+
+At API startup, all blog records are loaded from the PostgreSQL database and cached in memory to minimize query latency.
+
+For each blog post:
+- Page title
+- Page description
+- Full cleaned content  
+
+are concatenated into a single searchable document.
+
+The corpus is tokenized using a lightweight regular-expression tokenizer that:
+- Lowercases all text
+- Extracts alphanumeric word tokens
+- Ignores punctuation and formatting artifacts
+
+A BM25 index is then built using the `rank-bm25` implementation.
+
+---
+
+### Query Processing & Scoring
+
+Given a user query:
+1. The query is tokenized using the same tokenizer as the corpus
+2. BM25 relevance scores are computed for all documents
+3. Documents are ranked by descending BM25 score
+4. The top-*k* results are returned
+
+Each result includes:
+- Destination name (extracted during data processing)
+- Country (parsed from the destination string when available)
+- Geographic coordinates (latitude / longitude)
+- BM25 relevance score
+- Source metadata (title, author, URLs)
+- A short content preview
+
+BM25 scores are returned directly to the client to preserve interpretability.
+
+---
+
+## Semantic Retrieval: ModernBERT + FAISS
+
+### Overview
+
+To capture semantic intent beyond keyword overlap, the system implements a vector-based retrieval pipeline using ModernBERT embeddings indexed with FAISS.
+
+This enables retrieval based on meaning, thematic similarity, and experiential context expressed in natural language queries.
+
+---
+
+### Embedding Model
+
+The semantic model uses:
+
+- **Model**: `nomic-ai/modernbert-embed-base`
+- **Architecture**: Transformer-based encoder
+- **Embedding strategy**: Mean pooling over token embeddings with attention masking
+- **Normalization**: L2 normalization to enable cosine-style similarity via L2 distance
+
+Embeddings are computed offline for all blog posts and stored on disk.
+
+---
+
+### FAISS Index Construction
+
+At runtime:
+1. Blog metadata is loaded from the database
+2. Precomputed document embeddings are loaded from disk
+3. A FAISS `IndexFlatL2` index is constructed
+4. All document embeddings are added to the index
+
+This design decouples embedding generation from API serving, allowing efficient semantic search with low latency.
+
+---
+
+### Query Processing & Retrieval
+
+For each semantic search request:
+1. The query is embedded using the same ModernBERT model
+2. The FAISS index performs nearest-neighbor search
+3. Documents are ranked by L2 distance in embedding space
+4. The top-*k* nearest neighbors are returned
+
+Each result includes:
+- Destination name and country
+- Latitude and longitude
+- Semantic distance score
+- Source metadata
+- Content preview and full cleaned text
+
+Lower distance values indicate higher semantic similarity.
+
+---
+
+## Result Explanation with LLMs
+
+### Motivation
+
+To improve transparency and interpretability, the system optionally generates natural-language explanations describing *why* a destination was retrieved for a given query.
+
+---
+
+### Explanation Generation
+
+For the top semantic results:
+1. A prompt is constructed containing:
+   - The user query
+   - The full text of the retrieved blog post
+2. The prompt is sent to a hosted large language model via the HuggingFace Inference API
+3. The model generates a concise explanation describing the relevance of the destination
+
+The explanation is constrained to a small number of sentences and explicitly references the destination name.
+
+---
+
+## Unified API Design
+
+Both BM25 and ModernBERT retrieval methods are exposed through a single `/search` endpoint. The retrieval strategy is selected via a simple configuration flag in the request payload.
+
+This design allows:
+- Direct comparison between lexical and semantic retrieval
+- Easy experimentation with hybrid or re-ranking approaches
+- Extensibility for future retrieval models
+
+---
+
+## Summary
+
+The methods combine:
+- **BM25** for fast, interpretable keyword-based search
+- **ModernBERT + FAISS** for context-aware semantic retrieval
+- **LLM-based explanations** for human-readable interpretability
+
+Together, these components form a flexible and extensible search system tailored to exploratory, off-the-beaten-path travel discovery.

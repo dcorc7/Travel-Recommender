@@ -4,27 +4,160 @@
     "href": "results.html",
     "title": "Results",
     "section": "",
-    "text": "Back to top"
+    "text": "This section presents qualitative results from the deployed Off-the-Beaten-Path Travel Recommender, using real queries and outputs generated through the live system. We compare retrieval behavior across models, beginning with a keyword-focused query designed to showcase BM25 performance."
+  },
+  {
+    "objectID": "results.html#bm25-results",
+    "href": "results.html#bm25-results",
+    "title": "Results",
+    "section": "BM25 Results",
+    "text": "BM25 Results\n\nTop 10 Results Table\n\n\n\n\n\n\n\n\n\nRank\nDestination\nRelevance Score\nNotes\n\n\n\n\n1\nAlps\n46.63\nExact keyword overlap with “Dolomites,” “Alps,” and “hiking”\n\n\n2\nPieralongia (Dolomites)\n38.68\nStrong match on Dolomites landmarks and hiking terms\n\n\n3\nU.S. Virgin Islands\n37.59\nHigh activity overlap, but incorrect geography\n\n\n4\nYosemite National Park\n37.40\nMountain hiking content, but unrelated region\n\n\n5\nCanada\n36.50\nBroad hiking and camping mentions; country-level\n\n\n6\nNorway\n35.36\nFrequent hiking and mountain keywords\n\n\n7\nHong Kong\n34.84\nHiking-related content despite urban setting\n\n\n8\nLake Hāwea (New Zealand)\n34.30\nOutdoor hiking narratives, but distant geography\n\n\n9\nMidwest (USA)\n33.71\nSeasonal outdoor activity content\n\n\n10\nTexas\n32.30\nCanyon hiking; strong activity terms\n\n\n\n\n\nQuery 1 Map\n\n\n\nBM25 Query 1 Map\n\n\n\n\nInterpretation\nBM25 performs very well at the top of the ranking, where results exhibit strong lexical overlap with the query terms. The first two destinations—Alps and Pieralongia—are both highly relevant and correctly grounded in the Dolomites region, demonstrating BM25’s effectiveness for explicit, structured queries.\nHowever, beyond the top two results, relevance begins to degrade noticeably:\n\nResults 3–10 span a wide range of global destinations, including the Caribbean, North America, Scandinavia, East Asia, and Oceania.\nThese entries are retrieved primarily due to frequent mentions of hiking, camping, or mountains, rather than alignment with the specific geographic constraint of Italy or the Dolomites.\nSeveral results (e.g., U.S. Virgin Islands, Texas) are geographically and climatically incompatible with alpine hiking, despite scoring highly.\n\nThis pattern highlights a key limitation of BM25: it treats each query term independently, without enforcing joint constraints across activity, terrain, and location.\n\n\nLLM-Generated Explanations (Top Results)\nThe system’s explanation module further clarifies why each result was returned:\nAlps: The explanation explicitly references hiking routes in the Dolomites, alpine trail systems, via ferrata climbing, and specific mountain towns used as hiking bases. This confirms a strong alignment between the query intent and the retrieved content.\nPieralongia: The explanation highlights Dolomites landmarks such as Seceda and Alpe di Siusi, emphasizing mountain meadows, hiking trails, and alpine terrain consistent with the query.\nU.S. Virgin Islands: While the explanation correctly notes hiking, camping, and climbing opportunities, it also reveals a semantic mismatch: the destination satisfies activity intent but not geographic intent.\n\n\nKey Takeaway (BM25)\nThis expanded result set demonstrates that BM25:\n\nExcels at precise keyword matching, especially at top ranks\nPerforms well for explicit, structured queries\nDoes not enforce semantic or geographic coherence across query components\nProduces increasingly noisy results as rank increases\n\nThese characteristics make BM25 a strong baseline for lexical relevance, but also motivate the use of semantic retrieval models like ModernBERT when contextual alignment and geographic coherence are important.\nIn the next section, these BM25 results can be compared directly against ModernBERT semantic retrieval, highlighting differences in ranking stability, error modes, and semantic generalization."
+  },
+  {
+    "objectID": "results.html#modernbert-results-semantic-retrieval",
+    "href": "results.html#modernbert-results-semantic-retrieval",
+    "title": "Results",
+    "section": "ModernBERT Results (Semantic Retrieval)",
+    "text": "ModernBERT Results (Semantic Retrieval)\nThe same query — “hiking trails in the Dolomites Italy” — was executed using ModernBERT semantic retrieval via FAISS. Results are ranked by semantic distance in embedding space, where lower values indicate greater contextual similarity to the query.\n\n### Top 10 Results Table\n\n\n\n\n\n\n\n\n\nRank\nDestination\nSemantic Distance\nNotes\n\n\n\n\n1\nAlps\n0.49\nDirect semantic match to hiking in the Dolomites\n\n\n2\nPieralongia (Dolomites)\n0.50\nHighly specific Dolomites landmark with hiking focus\n\n\n3\nRome (Abruzzo / Gran Sasso)\n0.57\nMountain hiking in Italy; conceptually similar but wrong region\n\n\n4\nChicago\n0.60\nOutdoor nature narrative, but weak mountain relevance\n\n\n5\nItaly\n0.62\nBroad country-level match; lacks destination specificity\n\n\n6\nAmalfi Coast\n0.64\nItaly travel content; coastal rather than mountainous\n\n\n7\nCinque (Cinque Terre)\n0.64\nHiking present, but coastal villages dominate\n\n\n8\nFlorence\n0.65\nTuscan countryside and hills; weak hiking specificity\n\n\n9\nCinque Terre\n0.65\nSimilar to rank 7; scenic hiking but not alpine\n\n\n10\nItaly\n0.66\nGeneric Italy travel overview\n\n\n\nLower distance values indicate higher semantic similarity.\n\n\nQuery 1 Map\n\n\n\nModernBERT Query 1 Map\n\n\n\n\nInterpretation\nModernBERT demonstrates strong semantic precision at the top of the ranking, with the first two results aligning exactly with the intended destination and activity. Both Alps and Pieralongia are explicitly associated with hiking in the Dolomites, confirming that the embedding model successfully captures both geographic and experiential intent.\nAs rank increases, the results gradually broaden in semantic scope:\n\nRank 3 (Rome / Abruzzo) remains contextually relevant due to descriptions of dolomite peaks, national parks, and rugged mountain hiking, even though it does not match the Dolomites geographically.\nMid-ranked results (Chicago, Italy) reflect thematic overlap with outdoor exploration and travel narratives, but lack strong alignment with alpine hiking.\nLower-ranked results (Amalfi Coast, Cinque Terre, Florence) emphasize scenic travel and light hiking, but shift away from mountainous terrain.\nBottom-ranked results become increasingly generic, representing Italy-wide travel content rather than destination-specific hiking experiences.\n\nThis smooth degradation illustrates how ModernBERT prioritizes conceptual similarity first, gradually relaxing constraints as distance increases.\n\n\nLLM-Generated Explanations (Top Results)\nThe explanation module provides additional insight into the semantic ranking:\nAlps: The explanation references specific Dolomites hiking trails (e.g., Roda de Pütia, San Lorenzo), via ferrata routes, alpine lodges, and climbing opportunities, confirming a near-perfect match to the query intent.\nPieralongia: The explanation highlights iconic Dolomites landmarks such as Seceda, Pieralongia rocks, and Alpe di Siusi, as well as hiking routes and alpine meadows near Ortisei in Val Gardena.\nRome (Abruzzo / Gran Sasso): Although geographically incorrect, the explanation reveals why this result appears: the blog post discusses dolomite peaks, rugged mountains, and hiking trails within Gran Sasso National Park, demonstrating semantic rather than lexical matching.\n\n\nKey Takeaway (ModernBERT)\nThis full ranking demonstrates that ModernBERT:\n\nStrongly prioritizes semantic alignment at the top of results\nPreserves mountain hiking intent even when geography drifts\nAvoids activity-only false positives (e.g., tropical islands) seen in BM25\nGradually relaxes specificity rather than introducing abrupt noise\n\nCompared to BM25, ModernBERT produces a more coherent semantic ranking, where errors reflect conceptual similarity rather than unrelated keyword overlap. This behavior is especially well-suited for exploratory travel queries where intent matters more than strict lexical precision."
+  },
+  {
+    "objectID": "results.html#bm25-results-1",
+    "href": "results.html#bm25-results-1",
+    "title": "Results",
+    "section": "BM25 Results",
+    "text": "BM25 Results\n\nTop 10 Results Table\n\n\n\n\n\n\n\n\n\nRank\nDestination\nRelevance Score\nNotes\n\n\n\n\n1\nMaine\n49.55\nStrong lexical match on “coastal,” “beach towns,” and seaside language\n\n\n2\nBoston\n48.92\nMatches “towns near Boston,” coastal context implied\n\n\n3\nGrayton Beach\n42.11\nExplicit seaside town with food and beach activities\n\n\n4\nSan Francisco\n40.61\nUrban coastal city; weak “small town” alignment\n\n\n5\nSanta Barbara\n39.89\nCoastal destination; more city-like than town\n\n\n6\nFlorida (Seaside / 30A)\n39.47\nStrong beach and food overlap; region-level\n\n\n7\nFlorida (30A region)\n39.46\nSimilar to rank 6; repeated coastal keyword hits\n\n\n8\nMaine\n39.29\nDuplicate regional result; broad coastal framing\n\n\n9\nAstoria, Oregon\n38.12\nSmall coastal town with cultural relevance\n\n\n10\nBoston\n37.61\nDuplicate regional entry\n\n\n\n\n\nQuery 2 Map\n\n\n\nBM25 Query 2 Map\n\n\n\n\nInterpretation\nBM25 performs well at identifying coastal and seaside-related destinations, as evidenced by the dominance of shoreline locations across the top 10 results. However, the ranking also reveals several important limitations when handling experiential intent:\n\nBroad regions and cities (e.g., Maine, Boston, San Francisco) are ranked above smaller towns, despite the query explicitly requesting small seaside towns.\nDuplicate regional entries (e.g., Maine, Florida, Boston) appear multiple times, indicating BM25’s sensitivity to repeated keyword mentions rather than destination granularity.\nWhile many results satisfy coastal criteria, fewer consistently satisfy slow travel or local food intent in a nuanced way.\n\nOverall, BM25 emphasizes keyword density over interpretive intent, favoring documents that frequently mention “coastal,” “beach,” or “town,” regardless of scale or travel pace.\n\n\nLLM-Generated Explanations (Top Results)\nThe explanation module provides insight into why the highest-ranked destinations were returned:\nMaine: The explanation highlights small coastal towns such as Ogunquit, Kennebunkport, and Wells, emphasizing seafood-based local cuisine, museums like the Ogunquit Museum of American Art, and seaside activities including swimming and sailing. This confirms a strong lexical and thematic match, despite Maine being a broad regional label.\nBoston: Although Boston itself is a major city, the explanation clarifies that the retrieved content focuses on nearby small coastal towns such as Rockport. These towns offer local food, art galleries, harbor sailing, and a slower pace of travel, partially aligning with the query intent.\nGrayton Beach: The explanation emphasizes Grayton Beach’s small-town character along Florida’s Highway 30A, highlighting local eateries, relaxed beach culture, and slow-paced exploration. This represents one of the strongest town-level matches in the ranking.\n\n\nKey Takeaway (BM25)\nThis example demonstrates that BM25:\n\nEffectively identifies coastal-related content\nPerforms well when queries include clear descriptive keywords\nTends to prioritize regions and cities over fine-grained destinations\nDoes not explicitly model concepts like slow travel or local culture\nWhile BM25 surfaces many relevant coastal locations, it struggles to consistently enforce scale (small towns) and experiential intent, motivating the use of semantic retrieval to better capture nuanced travel preferences.\n\nIn the next section, these results can be directly compared against ModernBERT semantic retrieval to evaluate whether embedding-based search produces more town-specific and experience-aligned rankings."
+  },
+  {
+    "objectID": "results.html#modernbert-results-semantic-retrieval-1",
+    "href": "results.html#modernbert-results-semantic-retrieval-1",
+    "title": "Results",
+    "section": "ModernBERT Results (Semantic Retrieval)",
+    "text": "ModernBERT Results (Semantic Retrieval)\nThe same query, “small seaside towns known for local food and slow travel”, was executed using ModernBERT semantic retrieval via FAISS. Results are ranked by semantic distance in embedding space, where lower values indicate stronger contextual similarity to the query.\n\nTop 10 Results Table\n\n\n\n\n\n\n\n\n\nRank\nDestination\nSemantic Distance\nNotes\n\n\n\n\n1\nSouth Shore (MA)\n0.57\nStrong match to slow travel, coastal towns, and local culture\n\n\n2\nMaine\n0.61\nSmall seaside towns with food, museums, and sailing\n\n\n3\nCalifornia\n0.62\nSmall towns and hidden beaches; experiential alignment\n\n\n4\nSydney\n0.62\nCoastal lifestyle and day trips; city-level\n\n\n5\nSalem (MA)\n0.62\nHistoric coastal town with museums and walkability\n\n\n6\nFrance (La Rochelle / Île de Ré)\n0.63\nSeaside towns emphasizing slow travel and food\n\n\n7\nItaly\n0.64\nCultural and culinary focus; broad geography\n\n\n8\nFlorida (Seaside / 30A)\n0.64\nCoastal living and relaxed pace\n\n\n9\nNorthern Michigan\n0.65\nSmall coastal town with local character\n\n\n10\nCharleston\n0.66\nHistoric coastal city; less “small town”\n\n\n\nLower distance values indicate higher semantic similarity.\n\n\nQuery 2 Map\n\n\n\nModernBERT Query 2 Map\n\n\n\n\nInterpretation\nModernBERT surfaces destinations that closely align with the experiential intent of the query, particularly slow travel, local food, and small coastal settings.\n\nThe top-ranked result, South Shore, Massachusetts, strongly reflects the query’s intent by emphasizing quiet coastal towns, local museums, sailing programs, beach exploration, and a relaxed pace of travel.\nMaine and Northern Michigan appear due to their narrative emphasis on charming seaside towns, seafood-driven local cuisine, and low-density coastal environments.\nFrance (La Rochelle / Île de Ré) emerges as a strong semantic match despite geographic distance, reflecting ModernBERT’s ability to generalize the concept of slow seaside living across countries.\n\nAs ranking depth increases, results gradually broaden:\n\nCity-level destinations (e.g., Sydney, Charleston) appear due to strong cultural and coastal narratives, despite partially violating the “small town” constraint.\nCountry-level entries (California, Italy) reflect broader travel narratives emphasizing hidden towns and culinary experiences, but lack fine-grained destination specificity.\n\nThis gradual relaxation contrasts with BM25’s sharper drop-off into geographically irrelevant results.\n\n\nLLM-Generated Explanations (Top Results)\nThe explanation module clarifies why ModernBERT prioritizes these results:\nSouth Shore (Massachusetts): The explanation highlights towns such as Plymouth, Duxbury, and Sandwich, emphasizing slow-paced exploration, local museums, sailing camps, beach swimming, and food-centered community events—closely matching all aspects of the query.\nMaine: The explanation references small coastal towns like Ogunquit and Camden, focusing on seafood cuisine, art museums, sailing, and relaxed seaside atmospheres consistent with slow travel.\nCalifornia: The explanation focuses on small towns and hidden beaches, highlighting local food traditions, museums, and immersive stays that support slow travel, even when destinations are slightly inland.\n\n\nKey Takeaway (ModernBERT)\nThis example demonstrates that ModernBERT:\n\nCaptures experiential and lifestyle-oriented intent beyond keywords\nPrioritizes slow travel, local culture, and town-scale settings\nProduces semantically coherent results across geographies\nRelaxes geographic constraints gradually rather than abruptly\n\nCompared to BM25, ModernBERT is more effective at modeling how a destination feels, making it better suited for exploratory travel queries where nuance, pace, and local culture matter more than exact keyword matches."
   },
   {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Off-the-Beaten-Path Travel Recommender",
     "section": "",
-    "text": "Introduction\n\n\nGithub Repository\nThe Github repository hosting all code for this project can be found here\n\n\n\n\n Back to top"
+    "text": "Introduction\nPopular travel platforms often optimize for popularity, reinforcing the same well-known destinations and experiences. This project takes a different approach.\nThe Off-the-Beaten-Path Travel Recommender is a semantic search and retrieval system designed to surface less-crowded, locally authentic, and contextually relevant travel destinations by learning directly from long-form travel blog content. Instead of relying on predefined destination rankings or user reviews, the system analyzes narrative travel writing to identify places that align with exploratory, low-tourism intent.\nAt its core, the project combines traditional information retrieval with modern transformer-based semantic search, exposed through a lightweight API for interactive exploration.\n\n\n\nWhat This System Does\n\nSearches thousands of travel blog posts describing destinations around the world\n\nSupports both keyword-based and semantic search modes\n\nCaptures nuanced intent such as quiet, local, hidden, or underrated\n\nReturns destination-level results with geographic metadata and source context\n\nGenerates natural-language explanations for why results match a query\n\nThe system is designed to be modular, interpretable, and extensible—making it suitable for research, experimentation, or deployment as a discovery-focused travel tool.\n\n\n\nCore Components\n\nLexical Retrieval (BM25)\nA fast, keyword-based baseline search using BM25 scoring. This mode prioritizes direct term overlap and serves as a strong reference point for traditional search behavior.\n\n\nSemantic Retrieval (ModernBERT + FAISS)\nA transformer-based semantic search pipeline using ModernBERT embeddings indexed with FAISS. This enables retrieval based on meaning rather than exact wording, allowing the system to understand experiential intent and contextual relevance across diverse travel narratives.\n\n\nAPI Layer\nA FastAPI backend exposes a unified /search endpoint, allowing clients to switch between retrieval models with a simple configuration flag. The API returns structured results, excerpts, and optional LLM-generated explanations.\n\n\n\n\nUse Cases\n\nDiscovering lesser-known destinations aligned with personal travel style\n\nComparing lexical vs semantic retrieval behavior\n\nExperimenting with modern NLP techniques in a real-world domain\n\nServing as a foundation for future recommendation or personalization systems\n\n\n\n\nGithub Repository\nThe Github repository hosting all code for this project can be found here\n\n\n\n\n Back to top"
   },
   {
     "objectID": "data_collection.html",
     "href": "data_collection.html",
-    "title": "Data & Feature Engineering",
+    "title": "Data Collection & Cleaning",
     "section": "",
-    "text": "Dataset:\n\n\nPreprocessing:\n\n\nFinal Input Format:\n\n\n\n\n Back to top"
+    "text": "This project constructs its retrieval corpus from long-form travel blog content, with an emphasis on destination-centric narratives rather than short reviews or structured listings. The data pipeline performs collection, cleaning, feature extraction, and enrichment before persisting records into a relational database for downstream retrieval and modeling.\nThe goal is to transform unstructured blog text into a searchable, geospatially grounded corpus suitable for both lexical and semantic search."
+  },
+  {
+    "objectID": "data_collection.html#data-sources",
+    "href": "data_collection.html#data-sources",
+    "title": "Data Collection & Cleaning",
+    "section": "Data Sources",
+    "text": "Data Sources\nThe primary data source consists of public WordPress-hosted travel blogs discovered via Google Search. These blogs are well-suited for the task due to their rich descriptive language and destination-focused storytelling.\nCandidate sites are identified using SerpAPI-powered Google queries, such as:\n\ntravel site:wordpress.com\nvariations targeting exploratory and off-the-beaten-path travel content\n\nThis approach avoids curated travel platforms and instead surfaces organically authored travel narratives."
+  },
+  {
+    "objectID": "data_collection.html#blog-discovery",
+    "href": "data_collection.html#blog-discovery",
+    "title": "Data Collection & Cleaning",
+    "section": "Blog Discovery",
+    "text": "Blog Discovery\nSearch results returned by SerpAPI are used to extract candidate blog URLs. From each result:\n\nThe base domain is extracted\nDomains are treated as independent travel blogs\nA list of candidate blog sites is compiled for crawling\n\nThis discovery process is intentionally broad to encourage destination diversity."
+  },
+  {
+    "objectID": "data_collection.html#sitemap-based-page-enumeration",
+    "href": "data_collection.html#sitemap-based-page-enumeration",
+    "title": "Data Collection & Cleaning",
+    "section": "Sitemap-Based Page Enumeration",
+    "text": "Sitemap-Based Page Enumeration\nFor each blog domain, the pipeline attempts to locate WordPress sitemaps using common paths, including:\n\n/post-sitemap.xml\n/sitemap.xml\n/sitemap-1.xml\n/sitemap_index.xml\n\nIf a valid sitemap is found: - All listed URLs are extracted - URLs are filtered to remove non-article pages (pagination, tags, categories, feeds, media files, admin paths)\nThis sitemap-first strategy ensures efficient and respectful crawling without brute-force URL guessing."
+  },
+  {
+    "objectID": "data_collection.html#content-scraping",
+    "href": "data_collection.html#content-scraping",
+    "title": "Data Collection & Cleaning",
+    "section": "Content Scraping",
+    "text": "Content Scraping\nEach candidate blog post is fetched and parsed using requests and BeautifulSoup. The following components are extracted:\n\nPage title\nMeta description\nAuthor (when available)\nMain body text (paragraph-level content)\n\nTo improve consistency and downstream performance, raw text is immediately normalized and cleaned."
+  },
+  {
+    "objectID": "data_collection.html#text-cleaning-normalization",
+    "href": "data_collection.html#text-cleaning-normalization",
+    "title": "Data Collection & Cleaning",
+    "section": "Text Cleaning & Normalization",
+    "text": "Text Cleaning & Normalization\nRaw blog content is cleaned using a custom text normalization pipeline:\n\nUnicode normalization and quote/dash standardization\nRemoval of punctuation and non-semantic symbols\nLowercasing and whitespace collapsing\nReplacement of symbols (e.g., & → and)\nRemoval of boilerplate artifacts\n\nThis produces a clean, searchable text field optimized for both BM25 indexing and transformer-based embedding generation."
+  },
+  {
+    "objectID": "data_collection.html#feature-engineering",
+    "href": "data_collection.html#feature-engineering",
+    "title": "Data Collection & Cleaning",
+    "section": "Feature Engineering",
+    "text": "Feature Engineering\n\nNamed Entity Recognition (NER)\nTo associate each blog post with a destination, spaCy Named Entity Recognition is applied to:\n\nPage titles\nMeta descriptions\n\nThe pipeline extracts the first plausible geopolitical or location entity (GPE, LOC), prioritizing: - Multi-word place names - Consecutive location entities when applicable\nThis step converts free-form text into a structured location_name field.\n\n\n\nGeocoding (Latitude & Longitude)\nExtracted location names are passed to Nominatim (OpenStreetMap) for geocoding. When successful, each destination is enriched with:\n\nLatitude\nLongitude\n\nThese coordinates enable: - Geographic visualization - Spatial filtering - Map-based downstream analysis\nFailures to resolve locations are logged and safely skipped."
+  },
+  {
+    "objectID": "data_collection.html#url-content-filtering",
+    "href": "data_collection.html#url-content-filtering",
+    "title": "Data Collection & Cleaning",
+    "section": "URL & Content Filtering",
+    "text": "URL & Content Filtering\nAdditional safeguards are applied to improve corpus quality:\n\nPagination, feeds, tags, and category pages are excluded\nMedia files and non-HTML resources are ignored\nPages with insufficient or malformed content are discarded\nDuplicate URLs are prevented at the database level\n\nThese checks ensure that only substantive, destination-relevant blog posts are retained."
+  },
+  {
+    "objectID": "data_collection.html#database-persistence",
+    "href": "data_collection.html#database-persistence",
+    "title": "Data Collection & Cleaning",
+    "section": "Database Persistence",
+    "text": "Database Persistence\nCleaned and enriched records are stored in a PostgreSQL database using SQLAlchemy ORM. Each stored record includes:\n\nBlog domain and page URL\nPage title, description, and author\nExtracted destination name\nLatitude and longitude\nFully cleaned textual content\n\nThe database schema enforces uniqueness on page URLs to prevent duplicate ingestion."
+  },
+  {
+    "objectID": "data_collection.html#export-reusability",
+    "href": "data_collection.html#export-reusability",
+    "title": "Data Collection & Cleaning",
+    "section": "Export & Reusability",
+    "text": "Export & Reusability\nFor downstream experimentation and reproducibility, database records can be exported back into chunked JSON files. This supports:\n\nOffline embedding generation\nFAISS index construction\nModel benchmarking and evaluation\n\nChunking ensures manageable file sizes for large-scale processing."
+  },
+  {
+    "objectID": "data_collection.html#design-philosophy",
+    "href": "data_collection.html#design-philosophy",
+    "title": "Data Collection & Cleaning",
+    "section": "Design Philosophy",
+    "text": "Design Philosophy\nThe data pipeline emphasizes:\n\nNarrative richness over structured tourism metadata\nInterpretability through explicit feature extraction\nRespectful crawling via sitemap discovery and rate limiting\nGeospatial grounding through NER and geocoding\nReproducibility through raw data preservation and database exports\n\nThis foundation enables robust lexical and semantic retrieval while remaining extensible for future enrichment steps such as sentiment analysis, trend detection, or user-feedback signals."
   },
   {
     "objectID": "methods.html",
     "href": "methods.html",
     "title": "Methods",
     "section": "",
-    "text": "Back to top"
+    "text": "This project implements a dual-retrieval search system for travel discovery, combining a traditional lexical baseline with a modern semantic embedding pipeline. Both retrieval methods operate over the same cleaned and enriched travel blog corpus and are exposed through a unified API."
+  },
+  {
+    "objectID": "methods.html#lexical-retrieval-bm25",
+    "href": "methods.html#lexical-retrieval-bm25",
+    "title": "Methods",
+    "section": "Lexical Retrieval: BM25",
+    "text": "Lexical Retrieval: BM25\n\nOverview\nBM25 (Best Match 25) is used as a traditional information retrieval baseline to rank travel blog posts based on term-level relevance between a user query and document text.\nThis approach prioritizes exact and partial keyword overlap and serves as a strong reference point for evaluating the benefits of semantic retrieval.\n\n\n\nIndex Construction\nAt API startup, all blog records are loaded from the PostgreSQL database and cached in memory to minimize query latency.\nFor each blog post: - Page title - Page description - Full cleaned content\nare concatenated into a single searchable document.\nThe corpus is tokenized using a lightweight regular-expression tokenizer that: - Lowercases all text - Extracts alphanumeric word tokens - Ignores punctuation and formatting artifacts\nA BM25 index is then built using the rank-bm25 implementation.\n\n\n\nQuery Processing & Scoring\nGiven a user query: 1. The query is tokenized using the same tokenizer as the corpus 2. BM25 relevance scores are computed for all documents 3. Documents are ranked by descending BM25 score 4. The top-k results are returned\nEach result includes: - Destination name (extracted during data processing) - Country (parsed from the destination string when available) - Geographic coordinates (latitude / longitude) - BM25 relevance score - Source metadata (title, author, URLs) - A short content preview\nBM25 scores are returned directly to the client to preserve interpretability."
+  },
+  {
+    "objectID": "methods.html#semantic-retrieval-modernbert-faiss",
+    "href": "methods.html#semantic-retrieval-modernbert-faiss",
+    "title": "Methods",
+    "section": "Semantic Retrieval: ModernBERT + FAISS",
+    "text": "Semantic Retrieval: ModernBERT + FAISS\n\nOverview\nTo capture semantic intent beyond keyword overlap, the system implements a vector-based retrieval pipeline using ModernBERT embeddings indexed with FAISS.\nThis enables retrieval based on meaning, thematic similarity, and experiential context expressed in natural language queries.\n\n\n\nEmbedding Model\nThe semantic model uses:\n\nModel: nomic-ai/modernbert-embed-base\nArchitecture: Transformer-based encoder\nEmbedding strategy: Mean pooling over token embeddings with attention masking\nNormalization: L2 normalization to enable cosine-style similarity via L2 distance\n\nEmbeddings are computed offline for all blog posts and stored on disk.\n\n\n\nFAISS Index Construction\nAt runtime: 1. Blog metadata is loaded from the database 2. Precomputed document embeddings are loaded from disk 3. A FAISS IndexFlatL2 index is constructed 4. All document embeddings are added to the index\nThis design decouples embedding generation from API serving, allowing efficient semantic search with low latency.\n\n\n\nQuery Processing & Retrieval\nFor each semantic search request: 1. The query is embedded using the same ModernBERT model 2. The FAISS index performs nearest-neighbor search 3. Documents are ranked by L2 distance in embedding space 4. The top-k nearest neighbors are returned\nEach result includes: - Destination name and country - Latitude and longitude - Semantic distance score - Source metadata - Content preview and full cleaned text\nLower distance values indicate higher semantic similarity."
+  },
+  {
+    "objectID": "methods.html#result-explanation-with-llms",
+    "href": "methods.html#result-explanation-with-llms",
+    "title": "Methods",
+    "section": "Result Explanation with LLMs",
+    "text": "Result Explanation with LLMs\n\nMotivation\nTo improve transparency and interpretability, the system optionally generates natural-language explanations describing why a destination was retrieved for a given query.\n\n\n\nExplanation Generation\nFor the top semantic results: 1. A prompt is constructed containing: - The user query - The full text of the retrieved blog post 2. The prompt is sent to a hosted large language model via the HuggingFace Inference API 3. The model generates a concise explanation describing the relevance of the destination\nThe explanation is constrained to a small number of sentences and explicitly references the destination name."
+  },
+  {
+    "objectID": "methods.html#unified-api-design",
+    "href": "methods.html#unified-api-design",
+    "title": "Methods",
+    "section": "Unified API Design",
+    "text": "Unified API Design\nBoth BM25 and ModernBERT retrieval methods are exposed through a single /search endpoint. The retrieval strategy is selected via a simple configuration flag in the request payload.\nThis design allows: - Direct comparison between lexical and semantic retrieval - Easy experimentation with hybrid or re-ranking approaches - Extensibility for future retrieval models"
+  },
+  {
+    "objectID": "methods.html#summary",
+    "href": "methods.html#summary",
+    "title": "Methods",
+    "section": "Summary",
+    "text": "Summary\nThe methods combine: - BM25 for fast, interpretable keyword-based search - ModernBERT + FAISS for context-aware semantic retrieval - LLM-based explanations for human-readable interpretability\nTogether, these components form a flexible and extensible search system tailored to exploratory, off-the-beaten-path travel discovery."
   }
 ]

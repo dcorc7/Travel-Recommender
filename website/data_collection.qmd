@@ -1,16 +1,162 @@
 ---
-title: Data & Feature Engineering
+title: Data Collection & Cleaning
 ---
 
-# Dataset:
+This project constructs its retrieval corpus from long-form travel blog content, with an emphasis on destination-centric narratives rather than short reviews or structured listings. The data pipeline performs collection, cleaning, feature extraction, and enrichment before persisting records into a relational database for downstream retrieval and modeling.
 
+The goal is to transform unstructured blog text into a searchable, geospatially grounded corpus suitable for both lexical and semantic search.
 
- 
+---
 
-# Preprocessing:
+## Data Sources
 
+The primary data source consists of public WordPress-hosted travel blogs discovered via Google Search. These blogs are well-suited for the task due to their rich descriptive language and destination-focused storytelling.
 
+Candidate sites are identified using SerpAPI-powered Google queries, such as:
 
-# Final Input Format:
+- `travel site:wordpress.com`
+- variations targeting exploratory and off-the-beaten-path travel content
 
+This approach avoids curated travel platforms and instead surfaces organically authored travel narratives.
 
+---
+
+## Blog Discovery
+
+Search results returned by SerpAPI are used to extract candidate blog URLs. From each result:
+
+1. The base domain is extracted
+2. Domains are treated as independent travel blogs
+3. A list of candidate blog sites is compiled for crawling
+
+This discovery process is intentionally broad to encourage destination diversity.
+
+---
+
+## Sitemap-Based Page Enumeration
+
+For each blog domain, the pipeline attempts to locate WordPress sitemaps using common paths, including:
+
+- `/post-sitemap.xml`
+- `/sitemap.xml`
+- `/sitemap-1.xml`
+- `/sitemap_index.xml`
+
+If a valid sitemap is found:
+- All listed URLs are extracted
+- URLs are filtered to remove non-article pages (pagination, tags, categories, feeds, media files, admin paths)
+
+This sitemap-first strategy ensures efficient and respectful crawling without brute-force URL guessing.
+
+---
+
+## Content Scraping
+
+Each candidate blog post is fetched and parsed using `requests` and `BeautifulSoup`. The following components are extracted:
+
+- **Page title**
+- **Meta description**
+- **Author (when available)**
+- **Main body text** (paragraph-level content)
+
+To improve consistency and downstream performance, raw text is immediately normalized and cleaned.
+
+---
+
+## Text Cleaning & Normalization
+
+Raw blog content is cleaned using a custom text normalization pipeline:
+
+- Unicode normalization and quote/dash standardization
+- Removal of punctuation and non-semantic symbols
+- Lowercasing and whitespace collapsing
+- Replacement of symbols (e.g., `& → and`)
+- Removal of boilerplate artifacts
+
+This produces a clean, searchable text field optimized for both BM25 indexing and transformer-based embedding generation.
+
+---
+
+## Feature Engineering
+
+### Named Entity Recognition (NER)
+
+To associate each blog post with a destination, spaCy Named Entity Recognition is applied to:
+
+- Page titles
+- Meta descriptions
+
+The pipeline extracts the first plausible geopolitical or location entity (`GPE`, `LOC`), prioritizing:
+- Multi-word place names
+- Consecutive location entities when applicable
+
+This step converts free-form text into a structured location_name field.
+
+---
+
+### Geocoding (Latitude & Longitude)
+
+Extracted location names are passed to Nominatim (OpenStreetMap) for geocoding. When successful, each destination is enriched with:
+
+- Latitude
+- Longitude
+
+These coordinates enable:
+- Geographic visualization
+- Spatial filtering
+- Map-based downstream analysis
+
+Failures to resolve locations are logged and safely skipped.
+
+---
+
+## URL & Content Filtering
+
+Additional safeguards are applied to improve corpus quality:
+
+- Pagination, feeds, tags, and category pages are excluded
+- Media files and non-HTML resources are ignored
+- Pages with insufficient or malformed content are discarded
+- Duplicate URLs are prevented at the database level
+
+These checks ensure that only substantive, destination-relevant blog posts are retained.
+
+---
+
+## Database Persistence
+
+Cleaned and enriched records are stored in a PostgreSQL database using SQLAlchemy ORM. Each stored record includes:
+
+- Blog domain and page URL
+- Page title, description, and author
+- Extracted destination name
+- Latitude and longitude
+- Fully cleaned textual content
+
+The database schema enforces uniqueness on page URLs to prevent duplicate ingestion.
+
+---
+
+## Export & Reusability
+
+For downstream experimentation and reproducibility, database records can be exported back into chunked JSON files. This supports:
+
+- Offline embedding generation
+- FAISS index construction
+- Model benchmarking and evaluation
+
+Chunking ensures manageable file sizes for large-scale processing.
+
+---
+
+## Design Philosophy
+
+The data pipeline emphasizes:
+
+- Narrative richness over structured tourism metadata
+- Interpretability through explicit feature extraction
+- Respectful crawling via sitemap discovery and rate limiting
+- Geospatial grounding through NER and geocoding
+- Reproducibility through raw data preservation and database exports
+
+This foundation enables robust lexical and semantic retrieval while remaining extensible for future enrichment steps such as sentiment analysis, trend detection, or user-feedback signals.
