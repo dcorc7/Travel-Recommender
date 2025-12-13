@@ -13,8 +13,7 @@ This project implements a context-aware travel recommendation system designed to
 
 The application combines:
 - **BM25 Baseline Search**: Traditional information retrieval over a corpus of travel blogs
-- **Attribute+Context Model**: Custom ranking that considers geographic type, cultural focus, experience tags, and contextual cues from blog content
-- **Popularity Bias Correction**: Bloom filters and Zipf-penalty dampening to reduce over-representation of mainstream destinations
+- **ModernBERT Search Model**: Semantic retrieval and re-ranking using transformer-based text embeddings from blog content, enabling contextual understanding beyond keyword matching
 
 All components are containerized using Docker and orchestrated with Docker Compose for easy deployment and reproducibility.
 
@@ -64,25 +63,29 @@ BM25 (Best Match 25) is a ranking function used by search engines to estimate th
 - Fast in-memory indexing (loaded once at startup)
 - Returns destination names, coordinates, and content previews
 
-### Attribute+Context Model
-A custom ranking algorithm that goes beyond keyword matching to understand what makes a destination "off the beaten path."
+### ModernBERT Semantic Search Model
 
-**Scoring Components:**
-1. **Attribute Matching** (`w_attr = 0.5`): Matches user-selected filters
-   - Geographic type: coastal, mountain, island, urban, etc.
-   - Cultural focus: food, art, history, markets, etc.
-   - Experience tags: quiet, adventure, hiking, photography, etc.
+A transformer-based semantic retrieval and re-ranking model that captures the meaning of user queries and travel narratives, enabling discovery of destinations that align with “off-the-beaten-path” intent beyond surface-level keyword overlap.
 
-2. **Context Signal** (`w_ctx = 0.35`): Analyzes blog language
-   - Positive cues: "hidden gem", "locals only", "underrated", "rarely visited"
-   - Negative cues: "bucket list", "must-see", "tourist hotspot", "crowded"
+**How it Works**
 
-3. **Query Term Overlap** (`w_qry = 0.15`): Traditional text matching
+- Encodes blog content and user queries using ModernBERT transformer embeddings
+- Projects both into a shared semantic vector space
+- Computes similarity scores to retrieve and re-rank destinations based on contextual relevance
+- Combines semantic similarity with lightweight metadata filters (e.g., geography, experience type)
 
-**Popularity Dampening:**
-- **Bloom Filter**: Excludes destinations above popularity threshold
-- **Zipf Penalty**: Applies graduated penalty based on destination frequency
-- **Tier Bucketing**: Groups popularity into discrete tiers for consistent dampening
+**Model Capabilities:**
+
+- Understands experiential intent (e.g., quiet, local, remote, authentic) from natural language
+- Captures contextual cues implicitly through embeddings rather than hand-crafted rules
+- Handles synonymy and paraphrasing (e.g., “hidden village” ≈ “undiscovered town”)
+- Robust to sparse or ambiguous queries
+
+**Outputs:**
+
+- Ranked list of destinations with semantic relevance scores
+- Associated blog metadata (title, author, URL, excerpts)
+- Destination coordinates for downstream visualization
 
 ### Architecture
 
@@ -96,7 +99,7 @@ The application consists of two Docker containers:
 **API Layer (FastAPI)**
 - Port: 8000 (mapped to 8081 on host)
 - Framework: FastAPI
-- Purpose: Serves BM25 and Attribute+Context models via REST API
+- Purpose: Serves BM25 and ModernBERT models via REST API
 
 **Database**
 - PostgreSQL database containing travel blog corpus
@@ -267,8 +270,7 @@ Open your browser and navigate to http://localhost:8501
 ### Step 2: Select Search Model
 Choose between:
 - **BM25**: Traditional keyword-based search over blog corpus
-- **Attribute+Context (Recommended)**: Custom ranking with popularity dampening
-- **TF-IDF**: Alternative keyword-based approach
+- **ModernBERT (Recommended)**: Custom ranking with popularity dampening
 
 ### Step 3: Configure Search Parameters
 
@@ -277,18 +279,10 @@ Choose between:
 - Describe the type of destination you're looking for
 
 **Filters:**
+- **Activity Types**: skiing, hiking, museums, camping, diving, etc.
 - **Geographic Type**: coastal, mountain, island, urban, desert, etc.
-- **Cultural Focus**: food, art, history, music, markets, festivals
-- **Experience Tags**: quiet, adventure, local, hiking, scenic
-
-**Model Controls:**
-- **Bloom Filter**: Exclude high-frequency (popular) destinations
-- **Zipf Penalty**: Adjust popularity dampening strength (0-1)
-- **Tier Bucketing**: Group similar popularity levels together
 
 **Advanced:**
-- **Google Trends**: Incorporate temporal popularity signals (experimental)
-- **Time Horizon**: 1 year, 90 days, 30 days, or all time
 - **Results (k)**: Number of destinations to return (3-50)
 
 ### Step 4: View Results
@@ -325,43 +319,21 @@ curl -X POST "http://localhost:8081/search" \
   -H "Content-Type: application/json" \
   -d '{
     "query": "temples in Kyoto Japan",
-    "filters": {
-      "geotype": [],
-      "culture": [],
-      "experience": [],
-      "min_confidence": 0.0
-    },
     "retrieval": {
       "model": "bm25",
-      "use_bloom": false,
-      "zipf_penalty": 0.0,
-      "tier_bucketing": false,
-      "use_trends": false,
-      "date_range": "1y",
       "k": 10
     }
   }'
 ```
 
-**Attribute+Context Search:**
+**ModernBERT Semantic Search (FAISS):**
 ```bash
 curl -X POST "http://localhost:8081/search" \
   -H "Content-Type: application/json" \
   -d '{
     "query": "quiet coastal villages with local markets",
-    "filters": {
-      "geotype": ["coastal"],
-      "culture": ["markets", "food"],
-      "experience": ["quiet", "local"],
-      "min_confidence": 0.3
-    },
     "retrieval": {
-      "model": "attribute+context",
-      "use_bloom": true,
-      "zipf_penalty": 0.35,
-      "tier_bucketing": true,
-      "use_trends": false,
-      "date_range": "1y",
+      "model": "faiss",
       "k": 12
     }
   }'
@@ -370,35 +342,68 @@ curl -X POST "http://localhost:8081/search" \
 ### Response Format
 ```json
 {
-  "query": "quiet coastal villages",
+  "query": "quiet coastal villages with local markets",
   "params": {
-    "filters": { ... },
-    "retrieval": { ... },
-    "model_used": "bm25"
+    "retrieval": {
+      "model": "faiss",
+      "k": 12
+    },
+    "model_used": "faiss"
   },
   "results": [
     {
-      "destination": "Ninh Binh, Vietnam",
+      "destination": "Ninh Binh",
       "country": "Vietnam",
       "lat": 20.25,
       "lon": 105.9,
-      "score": 8.3421,
-      "confidence": 0.83,
-      "tags": ["coastal", "kayak", "quiet"],
+      "distance": 0.1342,
       "snippets": [
-        "Pre-sunrise kayak under limestone arches—no tour buses.",
-        "Herons wake along quiet canals; underrated and serene."
+        "A quiet region of limestone karsts and river villages.",
+        "Local markets operate daily with minimal tourism."
       ],
+      "full_content": "Full blog text...",
       "why": {
-        "model": "BM25",
-        "page_title": "Hidden Gems of Northern Vietnam",
+        "model": "FAISS",
+        "page_title": "Hidden Northern Vietnam",
         "page_url": "https://example.com/blog/post",
+        "blog_url": "https://example.com",
         "author": "Travel Blogger"
       }
     }
+  ],
+  "explanations": [
+    "This destination aligns with your query due to its emphasis on quiet local villages and authentic market culture..."
   ]
 }
 ```
+
+## Viewing the MkDocs Documentation
+
+This project includes a documentation site built with MkDocs.
+
+### Serve the Docs Locally
+
+From the project root directory, run:
+
+```bash
+mkdocs serve
+```
+
+Open your browser and navigate to:
+
+```
+http://127.0.0.1:8000/
+```
+
+### Build the Static Site
+
+To generate a static version of the documentation:
+
+```bash
+mkdocs build
+```
+
+This creates a site/ directory containing the compiled HTML files. You can open site/index.html directly in a browser or deploy the folder to any static hosting service.
 
 ## Development
 
