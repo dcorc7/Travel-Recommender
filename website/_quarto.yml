@@ -1,0 +1,40 @@
+project:
+  type: website
+  output-dir: Travel-Recommender
+
+website:
+  title: "David Corcoran"
+  favicon: "assets/gu-logo.png"
+  back-to-top-navigation: true
+  navbar:
+    title: David Corcoran
+    search: true
+    left:
+      - text: Homepage
+        href: https://corcoran.georgetown.domains/Homepage/index.html
+      - text: Introduction
+        href: ./index.qmd
+      - text: Data Collection & Preprocessing
+        href: ./data_collection.qmd
+      - text: Methods
+        href: ./methods.qmd
+      - text: Results
+        href: ./results.qmd
+    right:
+      - icon: github
+        href: https://github.com/dcorc7
+        aria-label: GitHub
+      - icon: linkedin
+        href: https://www.linkedin.com/in/david-corcoran-70677917a/
+        aria-label: LinkedIn
+
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-location: left
+    toc-title: Table of Contents
+    css: ./stylesheets/styles.css
+
+
+

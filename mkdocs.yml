@@ -1,5 +1,5 @@
 site_name: Off The Beaten Path Travel Recommender
-repo_url: https://github.com/med2106/dsan6700_app_dev_project/
+repo_url: https://github.com/dcorc7/Travel-Recommender
 theme:
   name: material
 plugins:
