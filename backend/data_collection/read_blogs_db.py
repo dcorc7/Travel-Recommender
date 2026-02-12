@@ -35,9 +35,9 @@ class Whole_Blogs(Base):
         return f"Whole_Blogs(id={self.id!r}, , location_name={self.location_name!r}, page_title={self.page_title!r}"
 
 
-# with Session(engine) as session:
-    # posts = session.query(Whole_Blogs).all()
-    # print(posts)
+with Session(engine) as session:
+    posts = session.query(Whole_Blogs).all()
+    print(posts)
 
 with Session(engine) as session:
     count = session.execute(

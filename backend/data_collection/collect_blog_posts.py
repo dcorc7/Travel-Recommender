@@ -6,10 +6,13 @@ import numpy as np
 import spacy
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
+from geopy.geocoders import ArcGIS
 from urllib.parse import urlparse
 import math
 from decimal import Decimal
 import re
+import time
+import random
 # DB Connection Things
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -23,7 +26,9 @@ import unicodedata
 nlp = spacy.load("en_core_web_sm")
 
 # Load the geolocator
-geolocator = Nominatim(user_agent="off_the_path")
+#geolocator = Nominatim(user_agent="off_the_path")
+geolocator = ArcGIS(timeout=10)
+
 
 load_dotenv()
 
@@ -70,7 +75,7 @@ def serpapi_search(api_key, start_page = "0"):
     return results.get('organic_results', [])
 
 def get_all_blog_urls():
-    page_list = ['110','120','130','140','150','160','170','180','190','110']
+    page_list = ['130']
     url_list = []
 
     for page in page_list:
@@ -79,7 +84,7 @@ def get_all_blog_urls():
             url = result['link']
             url_list.append(url)
 
-    return url_list
+    return url_list[0:3]
 
 def get_wordpress_pages(base_url):
     # init list to store page links
@@ -118,6 +123,7 @@ def get_wordpress_pages(base_url):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=UserWarning)
         soup = BeautifulSoup(sitemap_response.text, 'html.parser')
+
     # find all links on page and store in a list
     links = soup.find_all('url')
     for link in links:
@@ -211,11 +217,25 @@ def get_blog_page_meta_data(page_url):
     else:
         description_content = ""
 
-    author_meta = soup.find('meta', attrs={'property': 'author'})
+    author_content = ""
+    
+    # Try different author meta tag patterns
+    author_meta = soup.find('meta', attrs={'name': 'author'})
+    if not author_meta:
+        author_meta = soup.find('meta', attrs={'property': 'article:author'})
+    if not author_meta:
+        author_meta = soup.find('meta', attrs={'name': 'article:author'})
+    
     if author_meta:
-        author_content = author_meta.get('content')
-    else:
-        author_content = ""
+        author_content = author_meta.get('content', '')
+    
+    # Fallback: look for author in HTML structure
+    if not author_content:
+        author_elem = soup.find('span', class_='author')
+        if not author_elem:
+            author_elem = soup.find('a', rel='author')
+        if author_elem:
+            author_content = author_elem.get_text(strip=True)
 
     return title, description_content, author_content
 
@@ -246,18 +266,27 @@ def find_geo_name(title, description):
     return extract_geo(doc_desc)
                 
 def get_lat_long(location_name):
+    if not location_name:
+        return None, None
+        
     try:
-        location = geolocator.geocode(location_name)
+        print(f"Geocoding '{location_name}'...")
+        time.sleep(0.5)  # Small delay, ArcGIS is more lenient
+        
+        location = geolocator.geocode(location_name, timeout=10)
+
         if location:
             lat = location.latitude
             long = location.longitude
+            print(f"✓ Found coordinates: {lat}, {long}")
             return lat, long
         else:
             print(f"Could not find location for: {location_name}")
-    except GeocoderTimedOut:
-        print("Error: Geocoding service timed out.")
+            return None, None
+            
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Geocoding error for {location_name}: {e}")
+        return None, None
 
 # I got this from ChatGPT since I couldnt figure out why things weren't writing to a DB
 
@@ -351,14 +380,30 @@ def main():
                     print("Skipping:", link)
                     continue
                 try:
+                    # slow down requests to avoid 509
+                    time.sleep(1)
+
                     # get blog content
                     content = get_blog_page_content(link)
+
                     # clean text
                     clean_content = clean_text(content)
+
                     # get blog meta data
                     title, description, author =  get_blog_page_meta_data(link)
                     place_name = find_geo_name(title, description)
+ 
                     lat, lon = get_lat_long(place_name)
+
+                    print(f"\nURL: {link}")
+                    print(f"Title: {title}")
+                    print(f"Description: {description}")
+                    print(f"Author: {author}")
+                    print(f"Location: {place_name}")
+                    print(f"Lat/Lon: {lat}, {lon}")
+                    print(f"Content preview: {clean_content[:200]}")
+                    print("")
+
                     # only write the row if the place name is defined
                     if place_name:
                         new_blog = Whole_Blogs(
@@ -385,10 +430,10 @@ def main():
                         except Exception as e:
                             session.rollback()
                             print("Error:", e)
-                    # if id >5:
-                    #     break
-                except Exception:
-                    print("Not enough info in",link)
+
+                except Exception as e:
+                    print("Error while processing", link)
+                    print(e)
                     continue
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ st.set_page_config(
 # Load styles from style.css
 apply_custom_css()
 
-# Backend config 
+# Backend config
 API_URL = os.getenv("API_URL", "https://travel-recommender-dlb4.onrender.com")
 
 
