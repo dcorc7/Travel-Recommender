@@ -37,7 +37,7 @@ st.set_page_config(
 apply_custom_css()
 
 # Backend config 
-API_URL = os.getenv("API_URL", "http://localhost:8081")
+API_URL = os.getenv("API_URL", "https://travel-recommender-dlb4.onrender.com")
 
 
 def _api_search(payload: Dict[str, Any], request_id: str) -> Dict[str, Any]:
