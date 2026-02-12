@@ -17,6 +17,26 @@ engine = create_engine(database_url)
 # Session = sessionmaker(bind=engine)
 session = Session(engine)
 
+# Create the table if it doesn't exist
+create_table_sql = """
+CREATE TABLE IF NOT EXISTS travel_blogs (
+    id SERIAL PRIMARY KEY,
+    blog_url TEXT,
+    page_url TEXT UNIQUE NOT NULL,
+    page_title TEXT,
+    page_description TEXT,
+    page_author TEXT,
+    location_name TEXT,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    content TEXT
+);
+"""
+
+with engine.connect() as conn:
+    conn.execute(text(create_table_sql))
+    conn.commit()
+
 # Fetch all rows from a table 
 result = session.execute(text("SELECT * FROM travel_blogs")).mappings().all()
 data_to_save = [dict(row) for row in result]

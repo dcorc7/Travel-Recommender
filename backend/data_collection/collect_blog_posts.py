@@ -21,6 +21,7 @@ import unicodedata
 
 # Load a pre-trained English language model
 nlp = spacy.load("en_core_web_sm")
+
 # Load the geolocator
 geolocator = Nominatim(user_agent="off_the_path")
 
@@ -29,8 +30,8 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 api_key = os.getenv("API_KEY")
 
-print(f"Database URL: {DATABASE_URL}")
-print(f"API Key: {api_key}")
+#print(f"Database URL: {DATABASE_URL}")
+#print(f"API Key: {api_key}")
 
 
 def clean_text(text):
