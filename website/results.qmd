@@ -93,7 +93,7 @@ The same query — “hiking trails in the Dolomites Italy” — was executed u
 
 *Lower distance values indicate higher semantic similarity.*
 
-### Query 1 Map
+### Query 1 Map 
 
 ![ModernBERT Query 1 Map](./img/bert_query_1.png)
 
