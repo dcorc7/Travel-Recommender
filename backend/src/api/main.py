@@ -22,12 +22,17 @@ except ImportError as e:
 
 # Import FAISS utilities
 try:
-    #from .modern_bert_utils import search_modernbert
-    from backend.src.api.modern_bert_utils import search_modernbert
+    from .modern_bert_utils import search_modernbert
     FAISS_AVAILABLE = True
+    logger.info("✓ FAISS search loaded successfully")
 except ImportError as e:
-    logger.warning(f"FAISS not available: {e}")
+    logger.error(f"FAISS import failed: {e}")  # ← Change to error so it's visible
     FAISS_AVAILABLE = False
+    search_modernbert = None  # ← Define it as None
+except Exception as e:  # ← Catch other errors too
+    logger.error(f"Unexpected error loading FAISS: {e}")
+    FAISS_AVAILABLE = False
+    search_modernbert = None
 
 # Import LLM link for explanations
 try:
