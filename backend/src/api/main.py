@@ -9,6 +9,10 @@ from pydantic import BaseModel, Field
 
 from .logging_utils import get_logger
 
+import boto3
+import io
+
+
 logger = get_logger("api")
 
 # Import BM25 utilities
