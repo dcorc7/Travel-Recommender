@@ -9,9 +9,6 @@ from pydantic import BaseModel, Field
 
 from .logging_utils import get_logger
 
-import boto3
-import io
-
 
 logger = get_logger("api")
 
@@ -25,7 +22,8 @@ except ImportError as e:
 
 # Import FAISS utilities
 try:
-    from .modern_bert_utils import search_modernbert
+    #from .modern_bert_utils import search_modernbert
+    from backend.src.api.modern_bert_utils import search_modernbert
     FAISS_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"FAISS not available: {e}")
