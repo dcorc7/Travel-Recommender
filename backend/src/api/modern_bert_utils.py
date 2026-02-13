@@ -5,12 +5,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column
 from transformers import AutoTokenizer, AutoModel
 from dotenv import load_dotenv
+import boto3
+import io
 
 load_dotenv()
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODEL_NAME = "nomic-ai/modernbert-embed-base"
-EMBEDDINGS_PATH = "travel_blog_embeddings.pt"
+EMBEDDINGS_PATH = "s3://travel-recommender-s3/travel_blog_embeddings.pt"
 
 # -----------------------------
 # Load model + tokenizer
@@ -73,6 +75,13 @@ def embed_texts(texts_batch):
 # -----------------------------
 # Load posts and embeddings
 # -----------------------------
+def load_embeddings_from_s3(bucket: str, key: str):
+    s3 = boto3.client("s3")
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    buffer = io.BytesIO(obj["Body"].read())
+    return torch.load(buffer, weights_only=True)
+
+
 def _load_posts_and_index():
     global _cached_posts, _index, _embeddings
 
@@ -88,7 +97,17 @@ def _load_posts_and_index():
         _cached_posts = session.query(Whole_Blogs).all()
 
     # Load precomputed embeddings
-    data = torch.load(EMBEDDINGS_PATH, weights_only=True)
+    # If  EMBEDDINGS_PATH starts with "s3://", parse it
+    if EMBEDDINGS_PATH.startswith("s3://"):
+        # Example: s3://my-bucket/path/to/travel_blog_embeddings.pt
+        _, bucket_key = EMBEDDINGS_PATH[5:].split("/", 1)
+        bucket_name, key = bucket_key.split("/", 1)
+        data = load_embeddings_from_s3(bucket_name, key)
+    else:
+        # fallback to local file
+        data = torch.load(EMBEDDINGS_PATH, weights_only=True)
+
+
     _embeddings = data["embeddings"]
 
     # Build FAISS index
