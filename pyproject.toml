@@ -37,7 +37,7 @@ dependencies = [
     "numpy>=1.24.3",
     
     # Machine learning & recommendation systems
-    "scikit-learn==1.3.2",
+    "scikit-learn>=1.4.0,<1.7.0",
     "xgboost>=1.7.5",
     "faiss-cpu>=1.7.4",  # Similarity search for dog matching
     
@@ -60,7 +60,7 @@ dependencies = [
     "pyyaml>=6.0",
     "joblib>=1.3.1",
     "redis>=4.5.0",  # Cache for bloom filters and sessions
-    "dotenv (>=0.9.9,<0.10.0)",
+    "python-dotenv>=1.0.0",
     "sqlalchemy (>=2.0.44,<3.0.0)",
     "psycopg2-binary (>=2.9.11,<3.0.0)",
 
