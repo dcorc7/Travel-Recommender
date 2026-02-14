@@ -47,3 +47,8 @@ with Session(engine) as session:
 
 
 
+"""
+HOW TO RUN:
+
+python ./backend/data_collection/read_blogs_db.py
+"""

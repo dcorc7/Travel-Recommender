@@ -38,16 +38,10 @@ dependencies = [
     
     # Machine learning & recommendation systems
     "scikit-learn>=1.4.0,<1.7.0",
-    "xgboost>=1.7.5",
     "faiss-cpu>=1.7.4",
     
     # Image processing & computer vision
     "pillow>=10.0.0",
-    "opencv-python>=4.8.0",
-    
-    # Advanced ML features
-    "pybloom-live>=4.0.0",
-    "datasketch>=1.6.3",
     
     # Visualization
     "matplotlib>=3.7.1",

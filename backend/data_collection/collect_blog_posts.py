@@ -438,3 +438,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+"""
+HOW TO RUN:
+
+python ./backend/data_collection/collect_travel_blogs.py
+"""
