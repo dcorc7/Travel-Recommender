@@ -5,6 +5,8 @@ build-backend = "hatchling.build"
 [tool.poetry]
 package-mode = false
 
+
+# We are using Poetry for dependency management not an actual Package
 [project]
 name = "off-the-path"
 version = "1.0.0"
@@ -15,12 +17,13 @@ authors = [
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10,<3.13"
-keywords = ["mlops", "machine-learning", "travel", "recommendation-system", "faiss", "fastapi"]
+keywords = ["mlops", "machine-learning", "travel", "recommendation-system", "faiss", "fastapi", "streamlit"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Education",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -28,7 +31,6 @@ classifiers = [
 ]
 
 # Core dependencies for travel recommendation
-# NOTE: torch is installed separately via requirements-torch.txt for CPU-only version
 dependencies = [
     # Data processing & analysis
     "pandas>=1.5.3",
@@ -41,14 +43,10 @@ dependencies = [
     # Image processing & computer vision
     "pillow>=10.0.0",
     
-    # Visualization
-    "matplotlib>=3.7.1",
-    "seaborn>=0.12.2",
-    
     # Experiment tracking & model management
     "mlflow>=2.3.1",
     
-    # Utilities 
+    # Utilities
     "pyyaml>=6.0",
     "joblib>=1.3.1",
     "redis>=4.5.0",
@@ -62,7 +60,8 @@ dependencies = [
     # LLM
     "huggingface-hub>=0.34.0",
 
-    # Transformers (works with CPU-only torch)
+    # FAISS - PyTorch and transformers
+    "torch>=2.0.0,<2.6.0",
     "transformers>=4.57.3,<5.0.0",
     
     # Code quality
@@ -100,6 +99,17 @@ dev = [
     "mkdocs-material>=9.4.0",
     "mkdocstrings[python]>=0.23.0",
 ]
+
+# All dependencies combined
+#all = [
+#    "anythings-pawsible[api,frontend,dev]",
+#]
+
+[project.urls]
+#Homepage = "https://github.com/trevoradriaanse/anythings-pawsible"
+#Documentation = "https://github.com/trevoradriaanse/anythings-pawsible"
+#Repository = "https://github.com/trevoradriaanse/anythings-pawsible"
+#Issues = "https://github.com/trevoradriaanse/anythings-pawsible/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["backend/src"]

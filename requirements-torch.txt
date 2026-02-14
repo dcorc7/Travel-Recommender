@@ -1,3 +1,0 @@
-# CPU-only PyTorch to reduce memory from 864MB to ~140MB
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.5.1+cpu
