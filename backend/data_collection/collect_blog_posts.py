@@ -445,5 +445,5 @@ if __name__ == "__main__":
 """
 HOW TO RUN:
 
-python ./backend/data_collection/collect_travel_blogs.py
+python ./backend/data_collection/collect_blog_posts.py
 """
