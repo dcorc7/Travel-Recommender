@@ -97,18 +97,24 @@ def _load_posts_and_index():
         _cached_posts = session.query(Whole_Blogs).all()
 
     # Load precomputed embeddings
-    # If  EMBEDDINGS_PATH starts with "s3://", parse it
     if EMBEDDINGS_PATH.startswith("s3://"):
-        # Example: s3://my-bucket/path/to/travel_blog_embeddings.pt
-        _, bucket_key = EMBEDDINGS_PATH[5:].split("/", 1)
-        bucket_name, key = bucket_key.split("/", 1)
+        path_without_s3 = EMBEDDINGS_PATH[5:]
+        bucket_name, key = path_without_s3.split("/", 1)
         data = load_embeddings_from_s3(bucket_name, key)
     else:
-        # fallback to local file
         data = torch.load(EMBEDDINGS_PATH, weights_only=True)
 
-
-    _embeddings = data["embeddings"]
+    # Convert embeddings dict to tensor array
+    # Data is {blog_id: embedding_tensor, ...}
+    # We need to convert to a stacked tensor aligned with _cached_posts order
+    embedding_list = []
+    for post in _cached_posts:
+        if post.id in data:
+            embedding_list.append(data[post.id])
+        else:
+            raise ValueError(f"Missing embedding for blog post ID {post.id}")
+    
+    _embeddings = torch.stack(embedding_list)
 
     # Build FAISS index
     _index = faiss.IndexFlatL2(_embeddings.shape[1])

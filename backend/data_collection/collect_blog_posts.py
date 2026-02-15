@@ -75,7 +75,9 @@ def serpapi_search(api_key, start_page = "0"):
     return results.get('organic_results', [])
 
 def get_all_blog_urls():
-    page_list = ['130']
+    #page_list = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90', '150', '160', '170', '180', '190', '200']
+    page_list = ['0', '10', '20', '30', '40', '50', '60', '70', '80', '90']
+
     url_list = []
 
     for page in page_list:
@@ -84,7 +86,7 @@ def get_all_blog_urls():
             url = result['link']
             url_list.append(url)
 
-    return url_list[0:3]
+    return url_list
 
 def get_wordpress_pages(base_url):
     # init list to store page links

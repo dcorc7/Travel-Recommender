@@ -1,10 +1,20 @@
 ---
 title: Travel Recommender Api
-emoji: 🏆
+emoji: 🗺️
 colorFrom: blue
 colorTo: green
 sdk: docker
 pinned: false
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+# Travel Recommender API
+
+ML-powered travel recommendation backend built with FastAPI.
+
+## Features
+- FAISS vector search
+- Transformer embeddings
+- BM25 ranking
+
+## API Documentation
+Visit /docs for interactive API documentation.
