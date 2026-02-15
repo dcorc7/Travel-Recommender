@@ -9,6 +9,9 @@ import pydeck as pdk
 import requests
 import streamlit as st
 
+import plotly.express as px
+import plotly.graph_objects as go
+
 logging.basicConfig(
     level=logging.INFO,
     format='{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "frontend", "message": "%(message)s"}',
@@ -27,7 +30,7 @@ def apply_custom_css(filename: str = "style.css") -> None:
 
 # Page config 
 st.set_page_config(
-    page_title="Off-the-Beaten-Path Travel Recommender",
+    page_title="Off-the-Beaten-Path Travel Recommendation Application",
     page_icon="",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -48,23 +51,23 @@ def _api_search(payload: Dict[str, Any], request_id: str) -> Dict[str, Any]:
 
 
 # Sidebar 
-st.sidebar.markdown('<div class="sidebar-section-label">Query</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sidebar-section-label">User Query</div>', unsafe_allow_html=True)
 
 q1 = st.sidebar.text_area(
-   "Describe what you want in a travel destination:",
-   placeholder="e.g., small coastal towns in Spain with artisan markets",
+   "Describe generally what you want in a travel destination:",
+   placeholder="e.g., Small and coastal Mediterranean towns with artisan markets",
    height=80,
 )
 
 q2 = st.sidebar.text_area(
-   "What sort of activities are you interested in?",
-   placeholder ="e.g. seeing a local performance, attending an interesting museum, tasting unique foods, ect.",
+   "Describe what activities you are interested in",
+   placeholder ="e.g. Seeing local performances, attending museums, tasting unique foods, ect.",
    height=80,
 )
 
 q3 = st.sidebar.text_area(
-   "Descirbe the geographic type desired:",
-   placeholder ="e.g. coastal, mountain , urban, ect.",
+   "Describe the desired geography of your destination:",
+   placeholder ="e.g. coastal, mountain , urban, forest, ect.",
    height=80,
 )
 
@@ -74,9 +77,9 @@ q = f"{q1}. {q2}. {q3}"
 
 c1, c2 = st.sidebar.columns(2)
 with c1:
-    k = st.number_input("Results", 3, 50, 12, 1)
+    k = st.number_input("Number of Results", 3, 50, 12, 1)
 
-run = st.sidebar.button("🔎 Run search", use_container_width=True)
+run = st.sidebar.button("🔎 Search Destinations", use_container_width=True)
 
 model = st.sidebar.selectbox(
     "Retrieval model",
@@ -211,14 +214,14 @@ else:
     results = []
     explanations = []
 
-tabs = st.tabs(["Results", "Maps", "Explanations", "About"])
+tabs = st.tabs(["Results", "Maps", "Explanations", "Database Stats", "About"])
 
 
 
 # Results tab 
 with tabs[0]:
     if not results:
-        st.info("Run a search from the sidebar to see recommendations.")
+        st.info("Run a search query from the sidebar to see recommendations.")
     else:
         res_list = results
         if res_list:
@@ -374,8 +377,48 @@ with tabs[2]:
             st.markdown(f"Destination: {df['destination'][i]}")
             st.markdown(f" Explanation: {explanations[i]}")
 
+# Database Stats tab 
+with tabs[3]:  # Database Stats tab
+    st.subheader("📊 Database Statistics")
+    
+    try:
+        # Fetch database stats from API
+        db_stats = requests.get(f"{API_URL}/stats", timeout=10).json()
+        
+        # Overview metrics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Posts", db_stats.get("total_posts", "N/A"))
+        with col2:
+            st.metric("Unique Locations", db_stats.get("unique_locations", "N/A"))
+        with col3:
+            st.metric("Unique Blogs", db_stats.get("unique_blogs", "N/A"))
+        with col4:
+            st.metric("Unique Authors", db_stats.get("unique_authors", "N/A"))
+        
+        # Top locations chart
+        st.subheader("Top 20 Destinations")
+        top_locations = pd.DataFrame(db_stats.get("top_locations", []))
+        if not top_locations.empty:
+            fig = px.bar(top_locations, x='count', y='location', orientation='h',
+                        title='Most Mentioned Destinations')
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Geographic heatmap
+        st.subheader("Geographic Distribution")
+        geo_data = pd.DataFrame(db_stats.get("coordinates", []))
+        if not geo_data.empty:
+            fig = px.density_mapbox(geo_data, lat='lat', lon='lon', 
+                                   zoom=1, height=500,
+                                   mapbox_style="open-street-map")
+            st.plotly_chart(fig, use_container_width=True)
+            
+    except Exception as e:
+        st.error(f"Could not load database statistics: {e}")
+        st.info("Add a /stats endpoint to your API to enable this feature")
+
 # About tab 
-with tabs[3]:
+with tabs[4]:
     st.subheader("About this prototype")
     st.markdown(
         """

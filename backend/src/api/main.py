@@ -9,6 +9,13 @@ from pydantic import BaseModel, Field
 
 from .logging_utils import get_logger
 
+from fastapi import FastAPI, Request, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, func
+import os
+
+# Add database imports
+from .bm25_utils import Whole_Blogs, engine
 
 logger = get_logger("api")
 
@@ -239,6 +246,47 @@ def health():
         "bm25_model_available": BM25_AVAILABLE,
         "faiss_search_available": FAISS_AVAILABLE,
     }
+
+@app.get("/stats")
+def get_database_stats():
+    """Get database statistics for EDA"""
+    from sqlalchemy import func
+    
+    try:
+        with Session(engine) as session:
+            total_posts = session.query(func.count(Whole_Blogs.id)).scalar()
+            unique_locations = session.query(func.count(func.distinct(Whole_Blogs.location_name))).scalar()
+            unique_blogs = session.query(func.count(func.distinct(Whole_Blogs.blog_url))).scalar()
+            unique_authors = session.query(func.count(func.distinct(Whole_Blogs.page_author))).scalar()
+            
+            # Top 20 locations
+            top_locations = session.query(
+                Whole_Blogs.location_name,
+                func.count(Whole_Blogs.id).label('count')
+            ).group_by(Whole_Blogs.location_name)\
+             .order_by(func.count(Whole_Blogs.id).desc())\
+             .limit(20).all()
+            
+            # All coordinates for mapping
+            coordinates = session.query(
+                Whole_Blogs.latitude,
+                Whole_Blogs.longitude
+            ).filter(
+                Whole_Blogs.latitude.isnot(None),
+                Whole_Blogs.longitude.isnot(None)
+            ).all()
+            
+            return {
+                "total_posts": total_posts,
+                "unique_locations": unique_locations,
+                "unique_blogs": unique_blogs,
+                "unique_authors": unique_authors,
+                "top_locations": [{"location": loc, "count": cnt} for loc, cnt in top_locations],
+                "coordinates": [{"lat": lat, "lon": lon} for lat, lon in coordinates]
+            }
+    except Exception as e:
+        logger.error(f"Database stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/search", response_model=SearchResponse)

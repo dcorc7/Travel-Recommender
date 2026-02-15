@@ -3,3 +3,4 @@ requests>=2.32,<3.0
 pydeck>=0.9
 pandas>=2.2
 pillow>=10.0
+plotly>=5.0.0

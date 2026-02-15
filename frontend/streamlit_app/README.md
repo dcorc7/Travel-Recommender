@@ -1,8 +1,8 @@
 ---
 title: Travel Recommender
 emoji: 🌍
-colorFrom: blue
-colorTo: green
+colorFrom: purple
+colorTo: purple
 sdk: streamlit
 sdk_version: "1.32.0"
 python_version: "3.11"
