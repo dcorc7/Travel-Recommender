@@ -404,14 +404,79 @@ with tabs[3]:  # Database Stats tab
                         title='Most Mentioned Destinations')
             st.plotly_chart(fig, use_container_width=True)
         
-        # Geographic heatmap
+        # Geographic Distribution using pydeck
         st.subheader("Geographic Distribution")
         geo_data = pd.DataFrame(db_stats.get("coordinates", []))
-        if not geo_data.empty:
-            fig = px.density_mapbox(geo_data, lat='lat', lon='lon', 
-                                   zoom=1, height=500,
-                                   mapbox_style="open-street-map")
-            st.plotly_chart(fig, use_container_width=True)
+        
+        if geo_data.empty:
+            st.info("No coordinates available to plot.")
+        else:
+            # Group by unique lat/lon to get unique destinations
+            # Count how many posts per unique location
+            geo_data['count'] = 1
+            geo_unique = geo_data.groupby(['lat', 'lon']).agg({'count': 'sum'}).reset_index()
+            
+            # Create color based on post count (more posts = greener)
+            min_count = geo_unique['count'].min()
+            max_count = geo_unique['count'].max()
+            count_range = max_count - min_count if max_count != min_count else 1
+            
+            def count_to_color(count):
+                # Higher count = greener
+                relative = (count - min_count) / count_range
+                r = int(255 * (1 - relative))
+                g = int(255 * relative)
+                b = 0
+                a = 160
+                return [r, g, b, a]
+            
+            geo_unique["color"] = geo_unique["count"].apply(count_to_color)
+            
+            # Create pydeck layer
+            layer = pdk.Layer(
+                "ScatterplotLayer",
+                data=geo_unique,
+                get_position="[lon, lat]",
+                get_radius=25000,
+                pickable=True,
+                radius_scale=1,
+                radius_min_pixels=3,
+                radius_max_pixels=30,
+                get_fill_color="color",
+            )
+            
+            # Set view to center of all points
+            vs = pdk.ViewState(
+                latitude=float(geo_unique['lat'].mean()),
+                longitude=float(geo_unique['lon'].mean()),
+                zoom=1.5,
+            )
+            
+            # Render map
+            st.pydeck_chart(
+                pdk.Deck(
+                    layers=[layer],
+                    initial_view_state=vs,
+                    tooltip={
+                        "text": "Lat: {lat}\nLon: {lon}\nPosts: {count}"
+                    },
+                )
+            )
+            
+            # Legend
+            st.markdown(
+                """
+                <div class="map-legend">
+                    <div class="map-legend-swatch" style="background-color:rgb(255,0,0);"></div> Fewer posts (1-2)
+                    <div class="map-legend-swatch" style="background-color:rgb(255,165,0);"></div> Medium posts
+                    <div class="map-legend-swatch" style="background-color:rgb(0,255,0);"></div> More posts
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            # Show stats about the map
+            st.caption(f"Showing {len(geo_unique)} unique destinations from {len(geo_data)} total blog posts")
             
     except Exception as e:
         st.error(f"Could not load database statistics: {e}")

@@ -14,9 +14,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 import os
 
-# Add database imports
-from .bm25_utils import Whole_Blogs, engine
-
 logger = get_logger("api")
 
 # Import BM25 utilities
@@ -250,7 +247,18 @@ def health():
 @app.get("/stats")
 def get_database_stats():
     """Get database statistics for EDA"""
-    from sqlalchemy import func
+    from sqlalchemy import func, create_engine
+    from sqlalchemy.orm import Session
+    from .bm25_utils import Whole_Blogs  # Import inside function
+    import os
+    
+    # Create engine here
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail="DATABASE_URL not configured")
+    
+    engine = create_engine(DATABASE_URL)
     
     try:
         with Session(engine) as session:
@@ -267,14 +275,16 @@ def get_database_stats():
              .order_by(func.count(Whole_Blogs.id).desc())\
              .limit(20).all()
             
-            # All coordinates for mapping
+            # Sample coordinates (limit to 1000 for performance)
             coordinates = session.query(
                 Whole_Blogs.latitude,
                 Whole_Blogs.longitude
             ).filter(
                 Whole_Blogs.latitude.isnot(None),
                 Whole_Blogs.longitude.isnot(None)
-            ).all()
+            ).limit(1000).all()
+            
+            logger.info(f"Stats requested: {total_posts} posts, {unique_locations} locations")
             
             return {
                 "total_posts": total_posts,
@@ -282,10 +292,11 @@ def get_database_stats():
                 "unique_blogs": unique_blogs,
                 "unique_authors": unique_authors,
                 "top_locations": [{"location": loc, "count": cnt} for loc, cnt in top_locations],
-                "coordinates": [{"lat": lat, "lon": lon} for lat, lon in coordinates]
+                "coordinates": [{"lat": float(lat), "lon": float(lon)} for lat, lon in coordinates]
             }
     except Exception as e:
         logger.error(f"Database stats error: {e}")
+        from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=str(e))
 
 
