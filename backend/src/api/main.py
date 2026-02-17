@@ -9,10 +9,7 @@ from pydantic import BaseModel, Field
 
 from .logging_utils import get_logger
 
-from fastapi import FastAPI, Request, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, func
-import os
+from fastapi import FastAPI, Request
 
 logger = get_logger("api")
 
