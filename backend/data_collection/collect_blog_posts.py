@@ -62,7 +62,9 @@ def clean_text(text):
     return c_text
 
 def serpapi_search(api_key, start_page = "0"):
-    query = "travel site:wordpress.com"
+    #query = "travel site:wordpress.com"
+    query = 'travel (japan OR greece) site:wordpress.com'
+
     params = {
         "api_key": api_key,
         "engine": "google",
@@ -75,7 +77,7 @@ def serpapi_search(api_key, start_page = "0"):
     return results.get('organic_results', [])
 
 def get_all_blog_urls():
-    page_list = ['80', '90', "100", "150"]
+    page_list = ["0", "10", "20"]
 
     url_list = []
 
