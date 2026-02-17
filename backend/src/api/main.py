@@ -264,7 +264,7 @@ def get_database_stats():
             unique_blogs = session.query(func.count(func.distinct(Whole_Blogs.blog_url))).scalar()
             unique_authors = session.query(func.count(func.distinct(Whole_Blogs.page_author))).scalar()
             
-            # Sample coordinates (limit to 1000 for performance)
+            # Sample coordinates
             coordinates = session.query(
                 Whole_Blogs.location_name,
                 Whole_Blogs.latitude,

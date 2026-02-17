@@ -88,6 +88,4 @@ if __name__ == "__main__":
 """
 HOW TO RUN:
 python -m backend.bert.embed_blogs
-
-python ./backend/bert/embed_blogs.py 
 """
