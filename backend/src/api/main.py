@@ -267,22 +267,20 @@ def get_database_stats():
             unique_blogs = session.query(func.count(func.distinct(Whole_Blogs.blog_url))).scalar()
             unique_authors = session.query(func.count(func.distinct(Whole_Blogs.page_author))).scalar()
             
-            # Top 20 locations
-            top_locations = session.query(
-                Whole_Blogs.location_name,
-                func.count(Whole_Blogs.id).label('count')
-            ).group_by(Whole_Blogs.location_name)\
-             .order_by(func.count(Whole_Blogs.id).desc())\
-             .limit(20).all()
-            
             # Sample coordinates (limit to 1000 for performance)
             coordinates = session.query(
+                Whole_Blogs.location_name,
                 Whole_Blogs.latitude,
-                Whole_Blogs.longitude
+                Whole_Blogs.longitude,
+                func.count(Whole_Blogs.id).label('cnt')
             ).filter(
                 Whole_Blogs.latitude.isnot(None),
                 Whole_Blogs.longitude.isnot(None)
-            ).limit(1000).all()
+            ).group_by(
+                Whole_Blogs.location_name,
+                Whole_Blogs.latitude,
+                Whole_Blogs.longitude
+            ).all()
             
             logger.info(f"Stats requested: {total_posts} posts, {unique_locations} locations")
             
@@ -291,8 +289,14 @@ def get_database_stats():
                 "unique_locations": unique_locations,
                 "unique_blogs": unique_blogs,
                 "unique_authors": unique_authors,
-                "top_locations": [{"location": loc, "count": cnt} for loc, cnt in top_locations],
-                "coordinates": [{"lat": float(lat), "lon": float(lon)} for lat, lon in coordinates]
+                "coordinates": [
+                        {
+                        "location": loc,
+                        "lat": float(lat), 
+                        "lon": float(lon),
+                        "count": cnt
+                        } for loc, lat, lon, cnt in coordinates
+                ]
             }
     except Exception as e:
         logger.error(f"Database stats error: {e}")

@@ -396,13 +396,6 @@ with tabs[3]:  # Database Stats tab
         with col4:
             st.metric("Unique Authors", db_stats.get("unique_authors", "N/A"))
         
-        # Top locations chart
-        st.subheader("Top 20 Destinations")
-        top_locations = pd.DataFrame(db_stats.get("top_locations", []))
-        if not top_locations.empty:
-            fig = px.bar(top_locations, x='count', y='location', orientation='h',
-                        title='Most Mentioned Destinations')
-            st.plotly_chart(fig, use_container_width=True)
         
         # Geographic Distribution using pydeck
         st.subheader("Geographic Distribution")
@@ -411,31 +404,26 @@ with tabs[3]:  # Database Stats tab
         if geo_data.empty:
             st.info("No coordinates available to plot.")
         else:
-            # Group by unique lat/lon to get unique destinations
-            # Count how many posts per unique location
-            geo_data['count'] = 1
-            geo_unique = geo_data.groupby(['lat', 'lon']).agg({'count': 'sum'}).reset_index()
+            # Data already grouped by location from backend
             
-            # Create color based on post count (more posts = greener)
-            min_count = geo_unique['count'].min()
-            max_count = geo_unique['count'].max()
-            count_range = max_count - min_count if max_count != min_count else 1
-            
+            # Create color based on post count with fixed thresholds
             def count_to_color(count):
-                # Higher count = greener
-                relative = (count - min_count) / count_range
-                r = int(255 * (1 - relative))
-                g = int(255 * relative)
-                b = 0
-                a = 160
-                return [r, g, b, a]
+                if count <= 20:
+                    # Red (1-20 posts)
+                    return [255, 0, 0, 160]
+                elif count <= 40:
+                    # Yellow (21-40 posts)
+                    return [255, 255, 0, 160]
+                else:
+                    # Green (41+ posts)
+                    return [0, 255, 0, 160]
             
-            geo_unique["color"] = geo_unique["count"].apply(count_to_color)
+            geo_data["color"] = geo_data["count"].apply(count_to_color)
             
             # Create pydeck layer
             layer = pdk.Layer(
                 "ScatterplotLayer",
-                data=geo_unique,
+                data=geo_data,
                 get_position="[lon, lat]",
                 get_radius=25000,
                 pickable=True,
@@ -447,18 +435,18 @@ with tabs[3]:  # Database Stats tab
             
             # Set view to center of all points
             vs = pdk.ViewState(
-                latitude=float(geo_unique['lat'].mean()),
-                longitude=float(geo_unique['lon'].mean()),
+                latitude=float(geo_data['lat'].mean()),
+                longitude=float(geo_data['lon'].mean()),
                 zoom=1.5,
             )
             
-            # Render map
+            # Render map with location names in tooltip
             st.pydeck_chart(
                 pdk.Deck(
                     layers=[layer],
                     initial_view_state=vs,
                     tooltip={
-                        "text": "Lat: {lat}\nLon: {lon}\nPosts: {count}"
+                        "text": "{location}\nPosts: {count}"
                     },
                 )
             )
@@ -467,16 +455,16 @@ with tabs[3]:  # Database Stats tab
             st.markdown(
                 """
                 <div class="map-legend">
-                    <div class="map-legend-swatch" style="background-color:rgb(255,0,0);"></div> Fewer posts (1-2)
-                    <div class="map-legend-swatch" style="background-color:rgb(255,165,0);"></div> Medium posts
-                    <div class="map-legend-swatch" style="background-color:rgb(0,255,0);"></div> More posts
+                    <div class="map-legend-swatch" style="background-color:rgb(255,0,0);"></div> 1-20 posts
+                    <div class="map-legend-swatch" style="background-color:rgb(255,255,0);"></div> 21-40 posts
+                    <div class="map-legend-swatch" style="background-color:rgb(0,255,0);"></div> 41+ posts
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
             
             # Show stats about the map
-            st.caption(f"Showing {len(geo_unique)} unique destinations from {len(geo_data)} total blog posts")
+            st.caption(f"Showing {len(geo_data)} unique destinations")
             
     except Exception as e:
         st.error(f"Could not load database statistics: {e}")
