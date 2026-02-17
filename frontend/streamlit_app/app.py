@@ -425,11 +425,11 @@ with tabs[3]:  # Database Stats tab
                 "ScatterplotLayer",
                 data=geo_data,
                 get_position="[lon, lat]",
-                get_radius=25000,
+                get_radius=15000,
                 pickable=True,
                 radius_scale=1,
-                radius_min_pixels=3,
-                radius_max_pixels=30,
+                radius_min_pixels=2,
+                radius_max_pixels=20,
                 get_fill_color="color",
             )
             
