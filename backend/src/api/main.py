@@ -9,8 +9,6 @@ from pydantic import BaseModel, Field
 
 from .logging_utils import get_logger
 
-from fastapi import FastAPI, Request
-
 logger = get_logger("api")
 
 # Import BM25 utilities
