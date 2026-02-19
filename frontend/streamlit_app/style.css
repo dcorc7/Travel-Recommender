@@ -10,7 +10,7 @@ html, body, [class*="css"] {
   background:
     radial-gradient(circle at top left, rgba(129,140,248,0.18) 0, transparent 45%),
     radial-gradient(circle at bottom right, rgba(45,212,191,0.18) 0, transparent 50%),
-    #f3f4f6;
+    #dbdde1;
 }
 
 .main .block-container {
