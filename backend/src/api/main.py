@@ -15,7 +15,7 @@ logger = get_logger("api")
 try:
     from .bm25_utils import search_bm25
     BM25_AVAILABLE = True
-except ImportError as e:
+except ImportError as e: 
     logger.warning(f"BM25 not available: {e}")
     BM25_AVAILABLE = False
 

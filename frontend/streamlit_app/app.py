@@ -372,7 +372,7 @@ with tabs[2]:
     else:
         st.markdown("Explanations for the top 3 destinations:")
 
-        # for i in range(0,len(df)):
+        # Limit 3 to extent life of HF LLM token
         for i in range(0,3):
             st.markdown(f"Destination: {df['destination'][i]}")
             st.markdown(f" Explanation: {explanations[i]}")
