@@ -309,7 +309,7 @@ def search(req: SearchRequest):
     # Route to BM25 if selected
     if req.retrieval.model == "bm25":
         results = bm25_search(req)
-        explanations = generate_explanations(req, results)
+        explanations = generate_explanations(req, results)  if req.llm_explanations else []
 
         return SearchResponse(
             query = req.query,
@@ -318,12 +318,13 @@ def search(req: SearchRequest):
                 "model_used": "bm25",
             },
             results = results,
-            explanations = explanations,
+            explanations = explanations
         )
+    
     # Route to FAISS if selected
     if req.retrieval.model == "faiss":
         results = faiss_search(req)
-        explanations = generate_explanations(req, results)
+        explanations = generate_explanations(req, results) if req.llm_explanations else []
 
         return SearchResponse(
             query = req.query,
@@ -332,6 +333,6 @@ def search(req: SearchRequest):
                 "model_used": "faiss",
             },
             results = results,
-            explanations = explanations,
+            explanations = explanations
         )
     

@@ -10,7 +10,7 @@ html, body, [class*="css"] {
   background:
     radial-gradient(circle at top left, rgba(129,140,248,0.18) 0, transparent 45%),
     radial-gradient(circle at bottom right, rgba(45,212,191,0.18) 0, transparent 50%),
-    #9d9ef0;
+    #e6e9ed;
 }
 
 .main .block-container {
@@ -200,6 +200,20 @@ section[data-testid="stSidebar"] .sidebar-content {
 /* Adjust labels inside sidebar */
 section[data-testid="stSidebar"] label {
   color: #e5e7eb !important;
+}
+
+/* LLM selector pills in sidebar */
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"],
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"] p,
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"] span {
+  color: #000000 !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"]:hover,
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"]:hover p,
+section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"]:hover span {
+  color: #6366f1 !important;
+  border-color: #6366f1 !important;
 }
 
 /* Map legend */

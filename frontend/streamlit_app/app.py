@@ -71,21 +71,32 @@ q3 = st.sidebar.text_area(
    height=80,
 )
 
-
-# combine text query fields into one
+# Combine text query fields into one outputted value
 q = f"{q1}. {q2}. {q3}"
 
-c1, c2 = st.sidebar.columns(2)
-with c1:
-    k = st.number_input("Number of Results", 3, 50, 12, 1)
+# Number of results
+k = st.sidebar.number_input("Number of Search Results:", 3, 50, 10, 1)
 
-run = st.sidebar.button("🔎 Search Destinations", use_container_width=True)
+# Binary Selection for turning on/off llm generation
+llm_selection = st.sidebar.pills(
+    "Generate LLM Explanations:",
+    options = ["Yes", "No"],
+    selection_mode = "single",
+    default = "No",
+    width = "stretch"
+)
 
+# Retrieval model choice dropdown
 model = st.sidebar.selectbox(
-    "Retrieval model",
+    "Retrieval Model",
     ["BM25", "FAISS"],
     index=0,
 )
+
+
+run = st.sidebar.button("🔎 Search Destinations", use_container_width=True)
+
+
 
 
 # Hero 
@@ -122,8 +133,9 @@ def payload() -> Dict[str, Any]:
         "query": q.strip(),
         "retrieval": {
             "model": m,
-            "k": int(k),
+            "k": int(k)
         },
+        "llm_explanations": llm_selection == "Yes"
     }
 
 
@@ -207,9 +219,12 @@ response = st.session_state["response"]
 # print(response.keys)
 
 # parse the response
-if response:
+if response and llm_selection == "Yes":
     results = response.get("results") if isinstance(response, dict) else response.results
     explanations = response.get("explanations") if isinstance(response, dict) else response.explanations
+elif response and llm_selection == "No":
+    results = response.get("results") if isinstance(response, dict) else response.results
+    explanations = []
 else:
     results = []
     explanations = []
@@ -367,8 +382,10 @@ with tabs[1]:
 
 # Explanations tab
 with tabs[2]:
-    if not explanations:
+    if not results:
         st.info("Run a search first to view result explanations.")
+    elif results and llm_selection == "No":
+        st.info("LLM explanation generation has not been selected for this search.")
     else:
         st.markdown("Explanations for the top 3 destinations:")
 
@@ -379,7 +396,7 @@ with tabs[2]:
 
 # Database Stats tab 
 with tabs[3]:  # Database Stats tab
-    st.subheader("📊 Database Statistics")
+    st.subheader("Database Statistics")
     
     try:
         # Fetch database stats from API
