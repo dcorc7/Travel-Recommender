@@ -188,6 +188,7 @@ section[data-testid="stSidebar"] {
 section[data-testid="stSidebar"] .sidebar-content {
   padding-top: 0.5rem;
 }
+
 .sidebar-section-label {
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -199,21 +200,20 @@ section[data-testid="stSidebar"] .sidebar-content {
 
 /* Adjust labels inside sidebar */
 section[data-testid="stSidebar"] label {
-  color: #e5e7eb !important;
+  color: #e5e7eb;
 }
 
 /* LLM selector pills in sidebar */
-section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"],
-section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"] p,
-section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"] span {
+section[data-testid="stSidebar"] button[data-testid="stBaseButton-pills"] {
   color: #000000 !important;
 }
 
-section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"]:hover,
-section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"]:hover p,
-section[data-testid="stSidebar"] div[data-testid="stPills"] button[aria-selected="false"]:hover span {
+section[data-testid="stSidebar"] button[data-testid="stBaseButton-pills"] p {
+  color: #000000 !important;
+}
+
+section[data-testid="stSidebar"] button[data-testid="stBaseButton-pills"]:hover p {
   color: #6366f1 !important;
-  border-color: #6366f1 !important;
 }
 
 /* Map legend */

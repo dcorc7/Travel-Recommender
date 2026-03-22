@@ -90,6 +90,7 @@ class SearchRequest(BaseModel):
     query: str
     retrieval: Retrieval
     ui: Optional[Dict] = None
+    llm_explanations: bool = False
 
 
 class Result(BaseModel):

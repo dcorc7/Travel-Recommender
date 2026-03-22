@@ -489,12 +489,51 @@ with tabs[3]:  # Database Stats tab
 
 # About tab 
 with tabs[4]:
-    st.subheader("About this prototype")
+    st.subheader("About this Application")
     st.markdown(
         """
-This interface explores **context-aware travel discovery**:
 
-Uses **retrieval models** (BM25 or FAISS) to surface candidate places.  
+This application is a context-aware travel discovery system designed to surface lesser-known destinations that match your interests, rather than defaulting to popular tourist hotspots.
+
+---
+
+### How It Works
+
+Enter a free-form natural language query describing the kind of destination you're looking for. Example: *"quiet coastal villages with local markets"* or *"mountain hiking with dense forest and waterfalls".* The system retrieves and ranks destinations from a corpus of real travel blogs.
+
+**Two retrieval models are available:**
+
+**BM25 (Keyword Search)**
+A classical information retrieval model (Best Match 25) that tokenizes and indexes blog content at startup. It is fast and effective for precise keyword queries, as it searches across blog titles, descriptions, and full content to return the most lexically relevant destinations.
+
+**FAISS (Semantic Search)**
+A transformer-based semantic retrieval model using ModernBERT embeddings. Rather than matching keywords, it encodes your query and all blog content into a shared vector space and retrieves destinations by contextual similarity. This allows it to understand experiential intent and handle synonyms and paraphrasing naturally.
+
+---
+
+### Data & Infrastructure
+
+- **Corpus**: Thousands of Wordpress travel blog posts covering destinations worldwide, stored in an AWS RDS PostgreSQL database
+- **BM25 Index**: Blog content is tokenized at startup and cached in memory for fast in-session retrieval
+- **FAISS Index**: ModernBERT embeddings are precomputed and stored in an AWS S3 bucket, loaded into memory at startup for semantic search
+- **API**: A FastAPI backend hosted on Hugging Face Spaces handles all search requests, index loading, and LLM explanation generation
+- **Frontend**: This Streamlit interface communicates with the API in real time
+- **Containerized**: All components are Dockerized and orchestrated with Docker Compose
+
+---
+
+### Optional LLM Explanations
+
+When enabled within the sidebar toggle, the app calls DeepSeek-V3 (`deepseek-ai/DeepSeek-V3-0324`) via the Hugging Face Inference API to generate a natural language explanation for each result. This model describes why a destination matches your query based on the retrieved blog content.
+
+---
+
+### Results Include
+
+- Ranked destinations with relevance scores
+- Blog snippets and context cues from source posts
+- Destination coordinates plotted on an interactive map
+- Scoring breakdowns and model diagnostics
 
 ---
 
@@ -505,7 +544,7 @@ Uses **retrieval models** (BM25 or FAISS) to surface candidate places.
 - **Adam Stein**  
 - **Walter Hall**
 
-_DSAN 6700: Off-the-Beaten-Path Travel Recommender Project_
+_Georgetown DSAN 6700: Off-the-Beaten-Path Travel Recommender Project_
 
 ---
 """

@@ -2,6 +2,12 @@
 title: Off-the-Beaten-Path Travel Recommender
 ---
 
+# Application Link
+
+[ML Travel Recommendation Website](https://huggingface.co/spaces/dcorcoran/travel-recommender-hf-space)
+
+---
+
 # Introduction
 
 Popular travel platforms often optimize for popularity, reinforcing the same well-known destinations and experiences. This project takes a different approach.
@@ -43,12 +49,6 @@ A FastAPI backend exposes a unified `/search` endpoint, allowing clients to swit
 - Comparing lexical vs semantic retrieval behavior  
 - Experimenting with modern NLP techniques in a real-world domain  
 - Serving as a foundation for future recommendation or personalization systems  
-
----
-
-# Website 
-
-[ML Travel Recommendation Website](https://huggingface.co/spaces/dcorcoran/travel-recommender-hf-space)
 
 ---
 
