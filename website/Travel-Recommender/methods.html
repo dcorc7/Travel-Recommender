@@ -198,16 +198,40 @@ ul.task-list li input[type="checkbox"] {
 <section id="index-construction" class="level3">
 <h3 class="anchored" data-anchor-id="index-construction">Index Construction</h3>
 <p>At API startup, all blog records are loaded from the PostgreSQL database and cached in memory to minimize query latency.</p>
-<p>For each blog post: - Page title - Page description - Full cleaned content</p>
+<p>For each blog post:</p>
+<ul>
+<li>Page title</li>
+<li>Page description</li>
+<li>Full cleaned content</li>
+</ul>
 <p>are concatenated into a single searchable document.</p>
-<p>The corpus is tokenized using a lightweight regular-expression tokenizer that: - Lowercases all text - Extracts alphanumeric word tokens - Ignores punctuation and formatting artifacts</p>
+<p>The corpus is tokenized using a lightweight regular-expression tokenizer that:</p>
+<ul>
+<li>Lowercases all text</li>
+<li>Extracts alphanumeric word tokens</li>
+<li>Ignores punctuation and formatting artifacts</li>
+</ul>
 <p>A BM25 index is then built using the <code>rank-bm25</code> implementation.</p>
 <hr>
 </section>
 <section id="query-processing-scoring" class="level3">
 <h3 class="anchored" data-anchor-id="query-processing-scoring">Query Processing &amp; Scoring</h3>
-<p>Given a user query: 1. The query is tokenized using the same tokenizer as the corpus 2. BM25 relevance scores are computed for all documents 3. Documents are ranked by descending BM25 score 4. The top-<em>k</em> results are returned</p>
-<p>Each result includes: - Destination name (extracted during data processing) - Country (parsed from the destination string when available) - Geographic coordinates (latitude / longitude) - BM25 relevance score - Source metadata (title, author, URLs) - A short content preview</p>
+<p>Given a user query:</p>
+<ol type="1">
+<li>The query is tokenized using the same tokenizer as the corpus</li>
+<li>BM25 relevance scores are computed for all documents</li>
+<li>Documents are ranked by descending BM25 score</li>
+<li>The top-<em>k</em> results are returned</li>
+</ol>
+<p>Each result includes:</p>
+<ul>
+<li>Destination name (extracted during data processing)</li>
+<li>Country (parsed from the destination string when available)</li>
+<li>Geographic coordinates (latitude / longitude)</li>
+<li>BM25 relevance score</li>
+<li>Source metadata (title, author, URLs)</li>
+<li>A short content preview</li>
+</ul>
 <p>BM25 scores are returned directly to the client to preserve interpretability.</p>
 <hr>
 </section>
@@ -234,14 +258,33 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="faiss-index-construction" class="level3">
 <h3 class="anchored" data-anchor-id="faiss-index-construction">FAISS Index Construction</h3>
-<p>At runtime: 1. Blog metadata is loaded from the database 2. Precomputed document embeddings are loaded from disk 3. A FAISS <code>IndexFlatL2</code> index is constructed 4. All document embeddings are added to the index</p>
+<p>At runtime:</p>
+<ol type="1">
+<li>Blog metadata is loaded from the database</li>
+<li>Precomputed document embeddings are loaded from disk</li>
+<li>A FAISS <code>IndexFlatL2</code> index is constructed</li>
+<li>All document embeddings are added to the index</li>
+</ol>
 <p>This design decouples embedding generation from API serving, allowing efficient semantic search with low latency.</p>
 <hr>
 </section>
 <section id="query-processing-retrieval" class="level3">
 <h3 class="anchored" data-anchor-id="query-processing-retrieval">Query Processing &amp; Retrieval</h3>
-<p>For each semantic search request: 1. The query is embedded using the same ModernBERT model 2. The FAISS index performs nearest-neighbor search 3. Documents are ranked by L2 distance in embedding space 4. The top-<em>k</em> nearest neighbors are returned</p>
-<p>Each result includes: - Destination name and country - Latitude and longitude - Semantic distance score - Source metadata - Content preview and full cleaned text</p>
+<p>For each semantic search request:</p>
+<ol type="1">
+<li>The query is embedded using the same ModernBERT model</li>
+<li>The FAISS index performs nearest-neighbor search</li>
+<li>Documents are ranked by L2 distance in embedding space</li>
+<li>The top-<em>k</em> nearest neighbors are returned</li>
+</ol>
+<p>Each result includes:</p>
+<ul>
+<li>Destination name and country</li>
+<li>Latitude and longitude</li>
+<li>Semantic distance score</li>
+<li>Source metadata</li>
+<li>Content preview and full cleaned text</li>
+</ul>
 <p>Lower distance values indicate higher semantic similarity.</p>
 <hr>
 </section>
@@ -255,7 +298,16 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="explanation-generation" class="level3">
 <h3 class="anchored" data-anchor-id="explanation-generation">Explanation Generation</h3>
-<p>For the top semantic results: 1. A prompt is constructed containing: - The user query - The full text of the retrieved blog post 2. The prompt is sent to a hosted large language model via the HuggingFace Inference API 3. The model generates a concise explanation describing the relevance of the destination</p>
+<p>For the top semantic results:</p>
+<ol type="1">
+<li>A prompt is constructed containing:
+<ul>
+<li>The user query</li>
+<li>The full text of the retrieved blog post</li>
+</ul></li>
+<li>The prompt is sent to a hosted large language model via the HuggingFace Inference API</li>
+<li>The model generates a concise explanation describing the relevance of the destination</li>
+</ol>
 <p>The explanation is constrained to a small number of sentences and explicitly references the destination name.</p>
 <hr>
 </section>
@@ -263,12 +315,22 @@ ul.task-list li input[type="checkbox"] {
 <section id="unified-api-design" class="level2">
 <h2 class="anchored" data-anchor-id="unified-api-design">Unified API Design</h2>
 <p>Both BM25 and ModernBERT retrieval methods are exposed through a single <code>/search</code> endpoint. The retrieval strategy is selected via a simple configuration flag in the request payload.</p>
-<p>This design allows: - Direct comparison between lexical and semantic retrieval - Easy experimentation with hybrid or re-ranking approaches - Extensibility for future retrieval models</p>
+<p>This design allows:</p>
+<ul>
+<li>Direct comparison between lexical and semantic retrieval</li>
+<li>Easy experimentation with hybrid or re-ranking approaches</li>
+<li>Extensibility for future retrieval models</li>
+</ul>
 <hr>
 </section>
 <section id="summary" class="level2">
 <h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<p>The methods combine: - <strong>BM25</strong> for fast, interpretable keyword-based search - <strong>ModernBERT + FAISS</strong> for context-aware semantic retrieval - <strong>LLM-based explanations</strong> for human-readable interpretability</p>
+<p>The methods combine:</p>
+<ul>
+<li><strong>BM25</strong> for fast, interpretable keyword-based search</li>
+<li><strong>ModernBERT + FAISS</strong> for context-aware semantic retrieval</li>
+<li><strong>LLM-based explanations</strong> for human-readable interpretability</li>
+</ul>
 <p>Together, these components form a flexible and extensible search system tailored to exploratory, off-the-beaten-path travel discovery.</p>
 
 

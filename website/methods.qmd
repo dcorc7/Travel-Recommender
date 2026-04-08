@@ -21,6 +21,7 @@ This approach prioritizes exact and partial keyword overlap and serves as a stro
 At API startup, all blog records are loaded from the PostgreSQL database and cached in memory to minimize query latency.
 
 For each blog post:
+
 - Page title
 - Page description
 - Full cleaned content  
@@ -28,6 +29,7 @@ For each blog post:
 are concatenated into a single searchable document.
 
 The corpus is tokenized using a lightweight regular-expression tokenizer that:
+
 - Lowercases all text
 - Extracts alphanumeric word tokens
 - Ignores punctuation and formatting artifacts
@@ -39,12 +41,14 @@ A BM25 index is then built using the `rank-bm25` implementation.
 ### Query Processing & Scoring
 
 Given a user query:
+
 1. The query is tokenized using the same tokenizer as the corpus
 2. BM25 relevance scores are computed for all documents
 3. Documents are ranked by descending BM25 score
 4. The top-*k* results are returned
 
 Each result includes:
+
 - Destination name (extracted during data processing)
 - Country (parsed from the destination string when available)
 - Geographic coordinates (latitude / longitude)
@@ -82,6 +86,7 @@ Embeddings are computed offline for all blog posts and stored on disk.
 ### FAISS Index Construction
 
 At runtime:
+
 1. Blog metadata is loaded from the database
 2. Precomputed document embeddings are loaded from disk
 3. A FAISS `IndexFlatL2` index is constructed
@@ -94,12 +99,14 @@ This design decouples embedding generation from API serving, allowing efficient 
 ### Query Processing & Retrieval
 
 For each semantic search request:
+
 1. The query is embedded using the same ModernBERT model
 2. The FAISS index performs nearest-neighbor search
 3. Documents are ranked by L2 distance in embedding space
 4. The top-*k* nearest neighbors are returned
 
 Each result includes:
+
 - Destination name and country
 - Latitude and longitude
 - Semantic distance score
@@ -121,6 +128,7 @@ To improve transparency and interpretability, the system optionally generates na
 ### Explanation Generation
 
 For the top semantic results:
+
 1. A prompt is constructed containing:
    - The user query
    - The full text of the retrieved blog post
@@ -136,6 +144,7 @@ The explanation is constrained to a small number of sentences and explicitly ref
 Both BM25 and ModernBERT retrieval methods are exposed through a single `/search` endpoint. The retrieval strategy is selected via a simple configuration flag in the request payload.
 
 This design allows:
+
 - Direct comparison between lexical and semantic retrieval
 - Easy experimentation with hybrid or re-ranking approaches
 - Extensibility for future retrieval models
@@ -145,6 +154,7 @@ This design allows:
 ## Summary
 
 The methods combine:
+
 - **BM25** for fast, interpretable keyword-based search
 - **ModernBERT + FAISS** for context-aware semantic retrieval
 - **LLM-based explanations** for human-readable interpretability
