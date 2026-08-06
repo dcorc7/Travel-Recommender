@@ -248,7 +248,7 @@ def check_db_connection() -> bool:
 db_connected = check_db_connection()
 
 if not db_connected:
-    st.warning("Application not connected to Database.")
+    st.error("Application not connected to Database.")
 else:
     st.success("Application connected to Database")
 
