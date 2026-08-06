@@ -6,6 +6,10 @@ title: Off-the-Beaten-Path Travel Recommender
 
 [ML Travel Recommendation Website](https://huggingface.co/spaces/dcorcoran/travel-recommender-hf-space)
 
+::: {.callout-warning}
+Live webpage is no longer deployed. See results for video and written examples.
+:::
+
 ---
 
 # Introduction

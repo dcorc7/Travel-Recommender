@@ -6,6 +6,15 @@ This section presents qualitative results from the deployed Off-the-Beaten-Path 
 
 ---
 
+# Live Example Query
+
+<video width="100%" height="auto" controls>
+  <source src="./img/query_example.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+---
+
 # Query 1: “hiking trails in the Dolomites Italy”
 
 **Selected Activities:** hiking, camping, fishing, climbing
