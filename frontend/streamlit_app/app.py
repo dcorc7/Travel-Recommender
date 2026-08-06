@@ -229,6 +229,29 @@ else:
     results = []
     explanations = []
 
+
+def check_db_connection() -> bool:
+    """Check if the backend API is reachable and reports a healthy DB/S3 connection."""
+    try:
+        r = requests.get(f"{API_URL}/stats", timeout=5)
+        r.raise_for_status()
+        data = r.json()
+        # Adjust this condition to match whatever your /stats endpoint
+        # actually returns to signal DB/S3 health, e.g. a "status" field
+        # or simply the presence of non-zero counts.
+        return data.get("total_posts", 0) > 0
+    except Exception as e:
+        logger.warning(f"Database/S3 connectivity check failed: {e}")
+        return False
+
+
+db_connected = check_db_connection()
+
+if not db_connected:
+    st.warning("Application not connected to Database.")
+else:
+    st.success("Application connected to Database")
+
 tabs = st.tabs(["Results", "Maps", "Explanations", "Database Stats", "About"])
 
 
