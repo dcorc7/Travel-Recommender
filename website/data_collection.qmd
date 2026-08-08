@@ -2,78 +2,34 @@
 title: Data Collection & Cleaning
 ---
 
-This project constructs its retrieval corpus from long-form travel blog content, with an emphasis on destination-centric narratives rather than short reviews or structured listings. The data pipeline performs collection, cleaning, feature extraction, and enrichment before persisting records into a relational database for downstream retrieval and modeling.
-
-The goal is to transform unstructured blog text into a searchable, geospatially grounded corpus suitable for both lexical and semantic search.
+This project constructs its retrieval corpus from long-form travel blog content, with an emphasis on destination-centric narratives rather than short reviews or structured listings. The pipeline performs collection, cleaning, feature extraction, and geospatial enrichment before persisting records into a cloud-hosted relational database for downstream retrieval and modeling.
 
 ---
 
 ## Data Sources
 
-The primary data source consists of public WordPress-hosted travel blogs discovered via Google Search. These blogs are well-suited for the task due to their rich descriptive language and destination-focused storytelling.
-
-Candidate sites are identified using SerpAPI-powered Google queries, such as:
-
-- `travel site:wordpress.com`
-- variations targeting exploratory and off-the-beaten-path travel content
-
-This approach avoids curated travel platforms and instead surfaces organically authored travel narratives.
+The primary data source is public WordPress-hosted travel blogs, discovered via SerpAPI-powered Google searches (e.g. `travel site:wordpress.com`). This surfaces organically authored, destination-focused travel writing rather than curated travel platforms.
 
 ---
 
-## Blog Discovery
+## Blog Discovery & Page Enumeration
 
-Search results returned by SerpAPI are used to extract candidate blog URLs. From each result:
-
-1. The base domain is extracted
-2. Domains are treated as independent travel blogs
-3. A list of candidate blog sites is compiled for crawling
-
-This discovery process is intentionally broad to encourage destination diversity.
-
----
-
-## Sitemap-Based Page Enumeration
-
-For each blog domain, the pipeline attempts to locate WordPress sitemaps using common paths, including:
-
-- `/post-sitemap.xml`
-- `/sitemap.xml`
-- `/sitemap-1.xml`
-- `/sitemap_index.xml`
-
-If a valid sitemap is found:
-- All listed URLs are extracted
-- URLs are filtered to remove non-article pages (pagination, tags, categories, feeds, media files, admin paths)
-
-This sitemap-first strategy ensures efficient and respectful crawling without brute-force URL guessing.
+Each result returned by SerpAPI is treated as a candidate blog domain. For each domain, the pipeline looks for a WordPress sitemap at common paths (`/post-sitemap.xml`, `/sitemap.xml`, `/sitemap-1.xml`, `/sitemap_index.xml`). If found, all listed URLs are extracted and filtered to drop pagination, category/tag/author pages, feeds, admin paths, and non-HTML media—leaving only individual post URLs. This sitemap-first strategy enables efficient, respectful crawling without brute-force URL guessing.
 
 ---
 
 ## Content Scraping
 
-Each candidate blog post is fetched and parsed using `requests` and `BeautifulSoup`. The following components are extracted:
+Each candidate post is fetched with `requests` and parsed with `BeautifulSoup` to extract:
 
-- **Page title**
-- **Meta description**
-- **Author (when available)**
-- **Main body text** (paragraph-level content)
-
-To improve consistency and downstream performance, raw text is immediately normalized and cleaned.
+- Page title, meta description, and author (when available)
+- Main body text (paragraph-level content)
 
 ---
 
 ## Text Cleaning & Normalization
 
-Raw blog content is cleaned using a custom text normalization pipeline:
-
-- Unicode normalization and quote/dash standardization
-- Removal of punctuation and non-semantic symbols
-- Lowercasing and whitespace collapsing
-- Replacement of symbols (e.g., `& → and`)
-- Removal of boilerplate artifacts
-
-This produces a clean, searchable text field optimized for both BM25 indexing and transformer-based embedding generation.
+Raw content is normalized before storage: Unicode and quote/dash standardization, punctuation and symbol removal, lowercasing, whitespace collapsing, and replacement of symbols (e.g., `& → and`). This produces a clean text field used for both BM25 indexing and embedding generation.
 
 ---
 
@@ -81,51 +37,23 @@ This produces a clean, searchable text field optimized for both BM25 indexing an
 
 ### Named Entity Recognition (NER)
 
-To associate each blog post with a destination, spaCy Named Entity Recognition is applied to:
+spaCy NER is applied to each post's title and description to extract a plausible geopolitical or location entity (`GPE`, `LOC`), preferring multi-word place names and combining consecutive location entities where possible. This produces a structured `location_name` field.
 
-- Page titles
-- Meta descriptions
+### Geocoding
 
-The pipeline extracts the first plausible geopolitical or location entity (`GPE`, `LOC`), prioritizing:
-- Multi-word place names
-- Consecutive location entities when applicable
-
-This step converts free-form text into a structured location_name field.
-
----
-
-### Geocoding (Latitude & Longitude)
-
-Extracted location names are passed to Nominatim (OpenStreetMap) for geocoding. When successful, each destination is enriched with:
-
-- Latitude
-- Longitude
-
-These coordinates enable:
-- Geographic visualization
-- Spatial filtering
-- Map-based downstream analysis
-
-Failures to resolve locations are logged and safely skipped.
+Extracted location names are geocoded to latitude/longitude via **ArcGIS** (through `geopy`), with a short delay between requests. Locations that fail to resolve are logged and skipped rather than blocking ingestion.
 
 ---
 
 ## URL & Content Filtering
 
-Additional safeguards are applied to improve corpus quality:
-
-- Pagination, feeds, tags, and category pages are excluded
-- Media files and non-HTML resources are ignored
-- Pages with insufficient or malformed content are discarded
-- Duplicate URLs are prevented at the database level
-
-These checks ensure that only substantive, destination-relevant blog posts are retained.
+Pagination, feeds, tag/category pages, and non-HTML resources are excluded up front. Records with no resolvable location are not persisted, and duplicate `page_url` values are rejected at the database level.
 
 ---
 
 ## Database Persistence
 
-Cleaned and enriched records are stored in a PostgreSQL database using SQLAlchemy ORM. Each stored record includes:
+Cleaned and enriched records are written to an AWS RDS PostgreSQL database via SQLAlchemy. Each record includes:
 
 - Blog domain and page URL
 - Page title, description, and author
@@ -133,30 +61,10 @@ Cleaned and enriched records are stored in a PostgreSQL database using SQLAlchem
 - Latitude and longitude
 - Fully cleaned textual content
 
-The database schema enforces uniqueness on page URLs to prevent duplicate ingestion.
+The schema enforces uniqueness on `page_url`, and duplicate inserts are caught and skipped.
 
 ---
 
-## Export & Reusability
+## Embeddings for Semantic Search
 
-For downstream experimentation and reproducibility, database records can be exported back into chunked JSON files. This supports:
-
-- Offline embedding generation
-- FAISS index construction
-- Model benchmarking and evaluation
-
-Chunking ensures manageable file sizes for large-scale processing.
-
----
-
-## Design Philosophy
-
-The data pipeline emphasizes:
-
-- Narrative richness over structured tourism metadata
-- Interpretability through explicit feature extraction
-- Respectful crawling via sitemap discovery and rate limiting
-- Geospatial grounding through NER and geocoding
-- Reproducibility through raw data preservation and database exports
-
-This foundation enables robust lexical and semantic retrieval while remaining extensible for future enrichment steps such as sentiment analysis, trend detection, or user-feedback signals.
+ModernBERT embeddings for the cleaned corpus are computed offline and uploaded to an AWS S3 bucket, separate from the RDS metadata store. The API loads these embeddings from S3 at startup to build the FAISS index used for semantic search (see [Methods](methods.qmd)).

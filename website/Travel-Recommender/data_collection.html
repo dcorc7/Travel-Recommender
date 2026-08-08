@@ -137,19 +137,17 @@ ul.task-list li input[type="checkbox"] {
    
   <ul>
   <li><a href="#data-sources" id="toc-data-sources" class="nav-link active" data-scroll-target="#data-sources">Data Sources</a></li>
-  <li><a href="#blog-discovery" id="toc-blog-discovery" class="nav-link" data-scroll-target="#blog-discovery">Blog Discovery</a></li>
-  <li><a href="#sitemap-based-page-enumeration" id="toc-sitemap-based-page-enumeration" class="nav-link" data-scroll-target="#sitemap-based-page-enumeration">Sitemap-Based Page Enumeration</a></li>
+  <li><a href="#blog-discovery-page-enumeration" id="toc-blog-discovery-page-enumeration" class="nav-link" data-scroll-target="#blog-discovery-page-enumeration">Blog Discovery &amp; Page Enumeration</a></li>
   <li><a href="#content-scraping" id="toc-content-scraping" class="nav-link" data-scroll-target="#content-scraping">Content Scraping</a></li>
   <li><a href="#text-cleaning-normalization" id="toc-text-cleaning-normalization" class="nav-link" data-scroll-target="#text-cleaning-normalization">Text Cleaning &amp; Normalization</a></li>
   <li><a href="#feature-engineering" id="toc-feature-engineering" class="nav-link" data-scroll-target="#feature-engineering">Feature Engineering</a>
   <ul class="collapse">
   <li><a href="#named-entity-recognition-ner" id="toc-named-entity-recognition-ner" class="nav-link" data-scroll-target="#named-entity-recognition-ner">Named Entity Recognition (NER)</a></li>
-  <li><a href="#geocoding-latitude-longitude" id="toc-geocoding-latitude-longitude" class="nav-link" data-scroll-target="#geocoding-latitude-longitude">Geocoding (Latitude &amp; Longitude)</a></li>
+  <li><a href="#geocoding" id="toc-geocoding" class="nav-link" data-scroll-target="#geocoding">Geocoding</a></li>
   </ul></li>
   <li><a href="#url-content-filtering" id="toc-url-content-filtering" class="nav-link" data-scroll-target="#url-content-filtering">URL &amp; Content Filtering</a></li>
   <li><a href="#database-persistence" id="toc-database-persistence" class="nav-link" data-scroll-target="#database-persistence">Database Persistence</a></li>
-  <li><a href="#export-reusability" id="toc-export-reusability" class="nav-link" data-scroll-target="#export-reusability">Export &amp; Reusability</a></li>
-  <li><a href="#design-philosophy" id="toc-design-philosophy" class="nav-link" data-scroll-target="#design-philosophy">Design Philosophy</a></li>
+  <li><a href="#embeddings-for-semantic-search" id="toc-embeddings-for-semantic-search" class="nav-link" data-scroll-target="#embeddings-for-semantic-search">Embeddings for Semantic Search</a></li>
   </ul>
 </nav>
 </nav>
@@ -179,109 +177,52 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>This project constructs its retrieval corpus from long-form travel blog content, with an emphasis on destination-centric narratives rather than short reviews or structured listings. The data pipeline performs collection, cleaning, feature extraction, and enrichment before persisting records into a relational database for downstream retrieval and modeling.</p>
-<p>The goal is to transform unstructured blog text into a searchable, geospatially grounded corpus suitable for both lexical and semantic search.</p>
+<p>This project constructs its retrieval corpus from long-form travel blog content, with an emphasis on destination-centric narratives rather than short reviews or structured listings. The pipeline performs collection, cleaning, feature extraction, and geospatial enrichment before persisting records into a cloud-hosted relational database for downstream retrieval and modeling.</p>
 <hr>
 <section id="data-sources" class="level2">
 <h2 class="anchored" data-anchor-id="data-sources">Data Sources</h2>
-<p>The primary data source consists of public WordPress-hosted travel blogs discovered via Google Search. These blogs are well-suited for the task due to their rich descriptive language and destination-focused storytelling.</p>
-<p>Candidate sites are identified using SerpAPI-powered Google queries, such as:</p>
-<ul>
-<li><code>travel site:wordpress.com</code></li>
-<li>variations targeting exploratory and off-the-beaten-path travel content</li>
-</ul>
-<p>This approach avoids curated travel platforms and instead surfaces organically authored travel narratives.</p>
+<p>The primary data source is public WordPress-hosted travel blogs, discovered via SerpAPI-powered Google searches (e.g.&nbsp;<code>travel site:wordpress.com</code>). This surfaces organically authored, destination-focused travel writing rather than curated travel platforms.</p>
 <hr>
 </section>
-<section id="blog-discovery" class="level2">
-<h2 class="anchored" data-anchor-id="blog-discovery">Blog Discovery</h2>
-<p>Search results returned by SerpAPI are used to extract candidate blog URLs. From each result:</p>
-<ol type="1">
-<li>The base domain is extracted</li>
-<li>Domains are treated as independent travel blogs</li>
-<li>A list of candidate blog sites is compiled for crawling</li>
-</ol>
-<p>This discovery process is intentionally broad to encourage destination diversity.</p>
-<hr>
-</section>
-<section id="sitemap-based-page-enumeration" class="level2">
-<h2 class="anchored" data-anchor-id="sitemap-based-page-enumeration">Sitemap-Based Page Enumeration</h2>
-<p>For each blog domain, the pipeline attempts to locate WordPress sitemaps using common paths, including:</p>
-<ul>
-<li><code>/post-sitemap.xml</code></li>
-<li><code>/sitemap.xml</code></li>
-<li><code>/sitemap-1.xml</code></li>
-<li><code>/sitemap_index.xml</code></li>
-</ul>
-<p>If a valid sitemap is found: - All listed URLs are extracted - URLs are filtered to remove non-article pages (pagination, tags, categories, feeds, media files, admin paths)</p>
-<p>This sitemap-first strategy ensures efficient and respectful crawling without brute-force URL guessing.</p>
+<section id="blog-discovery-page-enumeration" class="level2">
+<h2 class="anchored" data-anchor-id="blog-discovery-page-enumeration">Blog Discovery &amp; Page Enumeration</h2>
+<p>Each result returned by SerpAPI is treated as a candidate blog domain. For each domain, the pipeline looks for a WordPress sitemap at common paths (<code>/post-sitemap.xml</code>, <code>/sitemap.xml</code>, <code>/sitemap-1.xml</code>, <code>/sitemap_index.xml</code>). If found, all listed URLs are extracted and filtered to drop pagination, category/tag/author pages, feeds, admin paths, and non-HTML media—leaving only individual post URLs. This sitemap-first strategy enables efficient, respectful crawling without brute-force URL guessing.</p>
 <hr>
 </section>
 <section id="content-scraping" class="level2">
 <h2 class="anchored" data-anchor-id="content-scraping">Content Scraping</h2>
-<p>Each candidate blog post is fetched and parsed using <code>requests</code> and <code>BeautifulSoup</code>. The following components are extracted:</p>
+<p>Each candidate post is fetched with <code>requests</code> and parsed with <code>BeautifulSoup</code> to extract:</p>
 <ul>
-<li><strong>Page title</strong></li>
-<li><strong>Meta description</strong></li>
-<li><strong>Author (when available)</strong></li>
-<li><strong>Main body text</strong> (paragraph-level content)</li>
+<li>Page title, meta description, and author (when available)</li>
+<li>Main body text (paragraph-level content)</li>
 </ul>
-<p>To improve consistency and downstream performance, raw text is immediately normalized and cleaned.</p>
 <hr>
 </section>
 <section id="text-cleaning-normalization" class="level2">
 <h2 class="anchored" data-anchor-id="text-cleaning-normalization">Text Cleaning &amp; Normalization</h2>
-<p>Raw blog content is cleaned using a custom text normalization pipeline:</p>
-<ul>
-<li>Unicode normalization and quote/dash standardization</li>
-<li>Removal of punctuation and non-semantic symbols</li>
-<li>Lowercasing and whitespace collapsing</li>
-<li>Replacement of symbols (e.g., <code>&amp; → and</code>)</li>
-<li>Removal of boilerplate artifacts</li>
-</ul>
-<p>This produces a clean, searchable text field optimized for both BM25 indexing and transformer-based embedding generation.</p>
+<p>Raw content is normalized before storage: Unicode and quote/dash standardization, punctuation and symbol removal, lowercasing, whitespace collapsing, and replacement of symbols (e.g., <code>&amp; → and</code>). This produces a clean text field used for both BM25 indexing and embedding generation.</p>
 <hr>
 </section>
 <section id="feature-engineering" class="level2">
 <h2 class="anchored" data-anchor-id="feature-engineering">Feature Engineering</h2>
 <section id="named-entity-recognition-ner" class="level3">
 <h3 class="anchored" data-anchor-id="named-entity-recognition-ner">Named Entity Recognition (NER)</h3>
-<p>To associate each blog post with a destination, spaCy Named Entity Recognition is applied to:</p>
-<ul>
-<li>Page titles</li>
-<li>Meta descriptions</li>
-</ul>
-<p>The pipeline extracts the first plausible geopolitical or location entity (<code>GPE</code>, <code>LOC</code>), prioritizing: - Multi-word place names - Consecutive location entities when applicable</p>
-<p>This step converts free-form text into a structured location_name field.</p>
-<hr>
+<p>spaCy NER is applied to each post’s title and description to extract a plausible geopolitical or location entity (<code>GPE</code>, <code>LOC</code>), preferring multi-word place names and combining consecutive location entities where possible. This produces a structured <code>location_name</code> field.</p>
 </section>
-<section id="geocoding-latitude-longitude" class="level3">
-<h3 class="anchored" data-anchor-id="geocoding-latitude-longitude">Geocoding (Latitude &amp; Longitude)</h3>
-<p>Extracted location names are passed to Nominatim (OpenStreetMap) for geocoding. When successful, each destination is enriched with:</p>
-<ul>
-<li>Latitude</li>
-<li>Longitude</li>
-</ul>
-<p>These coordinates enable: - Geographic visualization - Spatial filtering - Map-based downstream analysis</p>
-<p>Failures to resolve locations are logged and safely skipped.</p>
+<section id="geocoding" class="level3">
+<h3 class="anchored" data-anchor-id="geocoding">Geocoding</h3>
+<p>Extracted location names are geocoded to latitude/longitude via <strong>ArcGIS</strong> (through <code>geopy</code>), with a short delay between requests. Locations that fail to resolve are logged and skipped rather than blocking ingestion.</p>
 <hr>
 </section>
 </section>
 <section id="url-content-filtering" class="level2">
 <h2 class="anchored" data-anchor-id="url-content-filtering">URL &amp; Content Filtering</h2>
-<p>Additional safeguards are applied to improve corpus quality:</p>
-<ul>
-<li>Pagination, feeds, tags, and category pages are excluded</li>
-<li>Media files and non-HTML resources are ignored</li>
-<li>Pages with insufficient or malformed content are discarded</li>
-<li>Duplicate URLs are prevented at the database level</li>
-</ul>
-<p>These checks ensure that only substantive, destination-relevant blog posts are retained.</p>
+<p>Pagination, feeds, tag/category pages, and non-HTML resources are excluded up front. Records with no resolvable location are not persisted, and duplicate <code>page_url</code> values are rejected at the database level.</p>
 <hr>
 </section>
 <section id="database-persistence" class="level2">
 <h2 class="anchored" data-anchor-id="database-persistence">Database Persistence</h2>
-<p>Cleaned and enriched records are stored in a PostgreSQL database using SQLAlchemy ORM. Each stored record includes:</p>
+<p>Cleaned and enriched records are written to an AWS RDS PostgreSQL database via SQLAlchemy. Each record includes:</p>
 <ul>
 <li>Blog domain and page URL</li>
 <li>Page title, description, and author</li>
@@ -289,31 +230,12 @@ ul.task-list li input[type="checkbox"] {
 <li>Latitude and longitude</li>
 <li>Fully cleaned textual content</li>
 </ul>
-<p>The database schema enforces uniqueness on page URLs to prevent duplicate ingestion.</p>
+<p>The schema enforces uniqueness on <code>page_url</code>, and duplicate inserts are caught and skipped.</p>
 <hr>
 </section>
-<section id="export-reusability" class="level2">
-<h2 class="anchored" data-anchor-id="export-reusability">Export &amp; Reusability</h2>
-<p>For downstream experimentation and reproducibility, database records can be exported back into chunked JSON files. This supports:</p>
-<ul>
-<li>Offline embedding generation</li>
-<li>FAISS index construction</li>
-<li>Model benchmarking and evaluation</li>
-</ul>
-<p>Chunking ensures manageable file sizes for large-scale processing.</p>
-<hr>
-</section>
-<section id="design-philosophy" class="level2">
-<h2 class="anchored" data-anchor-id="design-philosophy">Design Philosophy</h2>
-<p>The data pipeline emphasizes:</p>
-<ul>
-<li>Narrative richness over structured tourism metadata</li>
-<li>Interpretability through explicit feature extraction</li>
-<li>Respectful crawling via sitemap discovery and rate limiting</li>
-<li>Geospatial grounding through NER and geocoding</li>
-<li>Reproducibility through raw data preservation and database exports</li>
-</ul>
-<p>This foundation enables robust lexical and semantic retrieval while remaining extensible for future enrichment steps such as sentiment analysis, trend detection, or user-feedback signals.</p>
+<section id="embeddings-for-semantic-search" class="level2">
+<h2 class="anchored" data-anchor-id="embeddings-for-semantic-search">Embeddings for Semantic Search</h2>
+<p>ModernBERT embeddings for the cleaned corpus are computed offline and uploaded to an AWS S3 bucket, separate from the RDS metadata store. The API loads these embeddings from S3 at startup to build the FAISS index used for semantic search (see <a href="./methods.html">Methods</a>).</p>
 
 
 </section>

@@ -2,161 +2,54 @@
 title: Methods
 ---
 
-This project implements a dual-retrieval search system for travel discovery, combining a traditional lexical baseline with a modern semantic embedding pipeline. Both retrieval methods operate over the same cleaned and enriched travel blog corpus and are exposed through a unified API.
+This project implements a dual-retrieval search system for travel discovery, combining a traditional lexical baseline with a modern semantic embedding pipeline. Both retrieval methods operate over the same cleaned and enriched travel blog corpus and are exposed through a unified FastAPI service, deployed as a Hugging Face Space.
 
 ---
 
 ## Lexical Retrieval: BM25
 
-### Overview
-
-BM25 (Best Match 25) is used as a traditional information retrieval baseline to rank travel blog posts based on term-level relevance between a user query and document text.
-
-This approach prioritizes exact and partial keyword overlap and serves as a strong reference point for evaluating the benefits of semantic retrieval.
-
----
-
 ### Index Construction
 
-At API startup, all blog records are loaded from the PostgreSQL database and cached in memory to minimize query latency.
-
-For each blog post:
-
-- Page title
-- Page description
-- Full cleaned content  
-
-are concatenated into a single searchable document.
-
-The corpus is tokenized using a lightweight regular-expression tokenizer that:
-
-- Lowercases all text
-- Extracts alphanumeric word tokens
-- Ignores punctuation and formatting artifacts
-
-A BM25 index is then built using the `rank-bm25` implementation.
-
----
+At API startup, all blog records are loaded from the AWS RDS PostgreSQL database and cached in memory. For each post, the title, description, and full cleaned content are concatenated into a single searchable document, tokenized with a lightweight regex tokenizer (lowercased, alphanumeric tokens only), and indexed with `rank-bm25`.
 
 ### Query Processing & Scoring
 
-Given a user query:
-
-1. The query is tokenized using the same tokenizer as the corpus
-2. BM25 relevance scores are computed for all documents
-3. Documents are ranked by descending BM25 score
-4. The top-*k* results are returned
-
-Each result includes:
-
-- Destination name (extracted during data processing)
-- Country (parsed from the destination string when available)
-- Geographic coordinates (latitude / longitude)
-- BM25 relevance score
-- Source metadata (title, author, URLs)
-- A short content preview
-
-BM25 scores are returned directly to the client to preserve interpretability.
+A query is tokenized the same way as the corpus, scored against every document, and ranked by descending BM25 score. The top-*k* results are returned, each with destination name, country, coordinates, BM25 score, source metadata (title, author, URLs), and a short content preview. Scores are returned directly to the client to preserve interpretability.
 
 ---
 
 ## Semantic Retrieval: ModernBERT + FAISS
 
-### Overview
+### Embeddings
 
-To capture semantic intent beyond keyword overlap, the system implements a vector-based retrieval pipeline using ModernBERT embeddings indexed with FAISS.
-
-This enables retrieval based on meaning, thematic similarity, and experiential context expressed in natural language queries.
-
----
-
-### Embedding Model
-
-The semantic model uses:
-
-- **Model**: `nomic-ai/modernbert-embed-base`
-- **Architecture**: Transformer-based encoder
-- **Embedding strategy**: Mean pooling over token embeddings with attention masking
-- **Normalization**: L2 normalization to enable cosine-style similarity via L2 distance
-
-Embeddings are computed offline for all blog posts and stored on disk.
-
----
+Document embeddings are computed offline using a ModernBERT-based encoder and stored in an AWS S3 bucket, decoupled from the RDS metadata store. Embeddings are mean-pooled and L2-normalized so that L2 distance approximates cosine similarity.
 
 ### FAISS Index Construction
 
-At runtime:
-
-1. Blog metadata is loaded from the database
-2. Precomputed document embeddings are loaded from disk
-3. A FAISS `IndexFlatL2` index is constructed
-4. All document embeddings are added to the index
-
-This design decouples embedding generation from API serving, allowing efficient semantic search with low latency.
-
----
+At API startup, blog metadata is loaded from RDS and the precomputed embeddings are loaded from S3. A FAISS `IndexFlatL2` index is built over the embeddings, decoupling embedding generation from request-time serving for low-latency search.
 
 ### Query Processing & Retrieval
 
-For each semantic search request:
-
-1. The query is embedded using the same ModernBERT model
-2. The FAISS index performs nearest-neighbor search
-3. Documents are ranked by L2 distance in embedding space
-4. The top-*k* nearest neighbors are returned
-
-Each result includes:
-
-- Destination name and country
-- Latitude and longitude
-- Semantic distance score
-- Source metadata
-- Content preview and full cleaned text
-
-Lower distance values indicate higher semantic similarity.
+The query is embedded with the same model and searched against the FAISS index. Results are ranked by ascending L2 distance (lower = more similar) and returned with destination name, country, coordinates, distance score, source metadata, and content preview.
 
 ---
 
 ## Result Explanation with LLMs
 
-### Motivation
-
-To improve transparency and interpretability, the system optionally generates natural-language explanations describing *why* a destination was retrieved for a given query.
-
----
-
-### Explanation Generation
-
-For the top semantic results:
-
-1. A prompt is constructed containing:
-   - The user query
-   - The full text of the retrieved blog post
-2. The prompt is sent to a hosted large language model via the HuggingFace Inference API
-3. The model generates a concise explanation describing the relevance of the destination
-
-The explanation is constrained to a small number of sentences and explicitly references the destination name.
+To improve transparency, the system can optionally generate a short natural-language explanation for each of the top 3 results. A prompt containing the user query and the retrieved post's full text is sent to DeepSeek-V3 via the Hugging Face Inference API, which returns a concise explanation referencing the destination. If the call fails, the API returns a placeholder ("Explanation unavailable.") rather than failing the whole request.
 
 ---
 
 ## Unified API Design
 
-Both BM25 and ModernBERT retrieval methods are exposed through a single `/search` endpoint. The retrieval strategy is selected via a simple configuration flag in the request payload.
-
-This design allows:
-
-- Direct comparison between lexical and semantic retrieval
-- Easy experimentation with hybrid or re-ranking approaches
-- Extensibility for future retrieval models
+Both BM25 and FAISS retrieval are exposed through a single `/search` endpoint; the retrieval strategy and explanation toggle are set via fields in the request payload. This allows direct comparison between lexical and semantic retrieval and leaves room for future hybrid or re-ranking approaches.
 
 ---
 
 ## Summary
 
-The methods combine:
+- **BM25**: fast, interpretable keyword-based search over an RDS-backed corpus
+- **ModernBERT + FAISS**: context-aware semantic retrieval over S3-backed embeddings
+- **LLM explanations**: human-readable interpretability via DeepSeek-V3
 
-- **BM25** for fast, interpretable keyword-based search
-- **ModernBERT + FAISS** for context-aware semantic retrieval
-- **LLM-based explanations** for human-readable interpretability
-
-Together, these components form a flexible and extensible search system tailored to exploratory, off-the-beaten-path travel discovery.
+Together, these components form a flexible, extensible search system for exploratory, off-the-beaten-path travel discovery.

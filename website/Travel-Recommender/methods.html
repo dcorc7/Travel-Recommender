@@ -138,22 +138,16 @@ ul.task-list li input[type="checkbox"] {
   <ul>
   <li><a href="#lexical-retrieval-bm25" id="toc-lexical-retrieval-bm25" class="nav-link active" data-scroll-target="#lexical-retrieval-bm25">Lexical Retrieval: BM25</a>
   <ul class="collapse">
-  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">Overview</a></li>
   <li><a href="#index-construction" id="toc-index-construction" class="nav-link" data-scroll-target="#index-construction">Index Construction</a></li>
   <li><a href="#query-processing-scoring" id="toc-query-processing-scoring" class="nav-link" data-scroll-target="#query-processing-scoring">Query Processing &amp; Scoring</a></li>
   </ul></li>
   <li><a href="#semantic-retrieval-modernbert-faiss" id="toc-semantic-retrieval-modernbert-faiss" class="nav-link" data-scroll-target="#semantic-retrieval-modernbert-faiss">Semantic Retrieval: ModernBERT + FAISS</a>
   <ul class="collapse">
-  <li><a href="#overview-1" id="toc-overview-1" class="nav-link" data-scroll-target="#overview-1">Overview</a></li>
-  <li><a href="#embedding-model" id="toc-embedding-model" class="nav-link" data-scroll-target="#embedding-model">Embedding Model</a></li>
+  <li><a href="#embeddings" id="toc-embeddings" class="nav-link" data-scroll-target="#embeddings">Embeddings</a></li>
   <li><a href="#faiss-index-construction" id="toc-faiss-index-construction" class="nav-link" data-scroll-target="#faiss-index-construction">FAISS Index Construction</a></li>
   <li><a href="#query-processing-retrieval" id="toc-query-processing-retrieval" class="nav-link" data-scroll-target="#query-processing-retrieval">Query Processing &amp; Retrieval</a></li>
   </ul></li>
-  <li><a href="#result-explanation-with-llms" id="toc-result-explanation-with-llms" class="nav-link" data-scroll-target="#result-explanation-with-llms">Result Explanation with LLMs</a>
-  <ul class="collapse">
-  <li><a href="#motivation" id="toc-motivation" class="nav-link" data-scroll-target="#motivation">Motivation</a></li>
-  <li><a href="#explanation-generation" id="toc-explanation-generation" class="nav-link" data-scroll-target="#explanation-generation">Explanation Generation</a></li>
-  </ul></li>
+  <li><a href="#result-explanation-with-llms" id="toc-result-explanation-with-llms" class="nav-link" data-scroll-target="#result-explanation-with-llms">Result Explanation with LLMs</a></li>
   <li><a href="#unified-api-design" id="toc-unified-api-design" class="nav-link" data-scroll-target="#unified-api-design">Unified API Design</a></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul>
@@ -185,153 +179,54 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>This project implements a dual-retrieval search system for travel discovery, combining a traditional lexical baseline with a modern semantic embedding pipeline. Both retrieval methods operate over the same cleaned and enriched travel blog corpus and are exposed through a unified API.</p>
+<p>This project implements a dual-retrieval search system for travel discovery, combining a traditional lexical baseline with a modern semantic embedding pipeline. Both retrieval methods operate over the same cleaned and enriched travel blog corpus and are exposed through a unified FastAPI service, deployed as a Hugging Face Space.</p>
 <hr>
 <section id="lexical-retrieval-bm25" class="level2">
 <h2 class="anchored" data-anchor-id="lexical-retrieval-bm25">Lexical Retrieval: BM25</h2>
-<section id="overview" class="level3">
-<h3 class="anchored" data-anchor-id="overview">Overview</h3>
-<p>BM25 (Best Match 25) is used as a traditional information retrieval baseline to rank travel blog posts based on term-level relevance between a user query and document text.</p>
-<p>This approach prioritizes exact and partial keyword overlap and serves as a strong reference point for evaluating the benefits of semantic retrieval.</p>
-<hr>
-</section>
 <section id="index-construction" class="level3">
 <h3 class="anchored" data-anchor-id="index-construction">Index Construction</h3>
-<p>At API startup, all blog records are loaded from the PostgreSQL database and cached in memory to minimize query latency.</p>
-<p>For each blog post:</p>
-<ul>
-<li>Page title</li>
-<li>Page description</li>
-<li>Full cleaned content</li>
-</ul>
-<p>are concatenated into a single searchable document.</p>
-<p>The corpus is tokenized using a lightweight regular-expression tokenizer that:</p>
-<ul>
-<li>Lowercases all text</li>
-<li>Extracts alphanumeric word tokens</li>
-<li>Ignores punctuation and formatting artifacts</li>
-</ul>
-<p>A BM25 index is then built using the <code>rank-bm25</code> implementation.</p>
-<hr>
+<p>At API startup, all blog records are loaded from the AWS RDS PostgreSQL database and cached in memory. For each post, the title, description, and full cleaned content are concatenated into a single searchable document, tokenized with a lightweight regex tokenizer (lowercased, alphanumeric tokens only), and indexed with <code>rank-bm25</code>.</p>
 </section>
 <section id="query-processing-scoring" class="level3">
 <h3 class="anchored" data-anchor-id="query-processing-scoring">Query Processing &amp; Scoring</h3>
-<p>Given a user query:</p>
-<ol type="1">
-<li>The query is tokenized using the same tokenizer as the corpus</li>
-<li>BM25 relevance scores are computed for all documents</li>
-<li>Documents are ranked by descending BM25 score</li>
-<li>The top-<em>k</em> results are returned</li>
-</ol>
-<p>Each result includes:</p>
-<ul>
-<li>Destination name (extracted during data processing)</li>
-<li>Country (parsed from the destination string when available)</li>
-<li>Geographic coordinates (latitude / longitude)</li>
-<li>BM25 relevance score</li>
-<li>Source metadata (title, author, URLs)</li>
-<li>A short content preview</li>
-</ul>
-<p>BM25 scores are returned directly to the client to preserve interpretability.</p>
+<p>A query is tokenized the same way as the corpus, scored against every document, and ranked by descending BM25 score. The top-<em>k</em> results are returned, each with destination name, country, coordinates, BM25 score, source metadata (title, author, URLs), and a short content preview. Scores are returned directly to the client to preserve interpretability.</p>
 <hr>
 </section>
 </section>
 <section id="semantic-retrieval-modernbert-faiss" class="level2">
 <h2 class="anchored" data-anchor-id="semantic-retrieval-modernbert-faiss">Semantic Retrieval: ModernBERT + FAISS</h2>
-<section id="overview-1" class="level3">
-<h3 class="anchored" data-anchor-id="overview-1">Overview</h3>
-<p>To capture semantic intent beyond keyword overlap, the system implements a vector-based retrieval pipeline using ModernBERT embeddings indexed with FAISS.</p>
-<p>This enables retrieval based on meaning, thematic similarity, and experiential context expressed in natural language queries.</p>
-<hr>
-</section>
-<section id="embedding-model" class="level3">
-<h3 class="anchored" data-anchor-id="embedding-model">Embedding Model</h3>
-<p>The semantic model uses:</p>
-<ul>
-<li><strong>Model</strong>: <code>nomic-ai/modernbert-embed-base</code></li>
-<li><strong>Architecture</strong>: Transformer-based encoder</li>
-<li><strong>Embedding strategy</strong>: Mean pooling over token embeddings with attention masking</li>
-<li><strong>Normalization</strong>: L2 normalization to enable cosine-style similarity via L2 distance</li>
-</ul>
-<p>Embeddings are computed offline for all blog posts and stored on disk.</p>
-<hr>
+<section id="embeddings" class="level3">
+<h3 class="anchored" data-anchor-id="embeddings">Embeddings</h3>
+<p>Document embeddings are computed offline using a ModernBERT-based encoder and stored in an AWS S3 bucket, decoupled from the RDS metadata store. Embeddings are mean-pooled and L2-normalized so that L2 distance approximates cosine similarity.</p>
 </section>
 <section id="faiss-index-construction" class="level3">
 <h3 class="anchored" data-anchor-id="faiss-index-construction">FAISS Index Construction</h3>
-<p>At runtime:</p>
-<ol type="1">
-<li>Blog metadata is loaded from the database</li>
-<li>Precomputed document embeddings are loaded from disk</li>
-<li>A FAISS <code>IndexFlatL2</code> index is constructed</li>
-<li>All document embeddings are added to the index</li>
-</ol>
-<p>This design decouples embedding generation from API serving, allowing efficient semantic search with low latency.</p>
-<hr>
+<p>At API startup, blog metadata is loaded from RDS and the precomputed embeddings are loaded from S3. A FAISS <code>IndexFlatL2</code> index is built over the embeddings, decoupling embedding generation from request-time serving for low-latency search.</p>
 </section>
 <section id="query-processing-retrieval" class="level3">
 <h3 class="anchored" data-anchor-id="query-processing-retrieval">Query Processing &amp; Retrieval</h3>
-<p>For each semantic search request:</p>
-<ol type="1">
-<li>The query is embedded using the same ModernBERT model</li>
-<li>The FAISS index performs nearest-neighbor search</li>
-<li>Documents are ranked by L2 distance in embedding space</li>
-<li>The top-<em>k</em> nearest neighbors are returned</li>
-</ol>
-<p>Each result includes:</p>
-<ul>
-<li>Destination name and country</li>
-<li>Latitude and longitude</li>
-<li>Semantic distance score</li>
-<li>Source metadata</li>
-<li>Content preview and full cleaned text</li>
-</ul>
-<p>Lower distance values indicate higher semantic similarity.</p>
+<p>The query is embedded with the same model and searched against the FAISS index. Results are ranked by ascending L2 distance (lower = more similar) and returned with destination name, country, coordinates, distance score, source metadata, and content preview.</p>
 <hr>
 </section>
 </section>
 <section id="result-explanation-with-llms" class="level2">
 <h2 class="anchored" data-anchor-id="result-explanation-with-llms">Result Explanation with LLMs</h2>
-<section id="motivation" class="level3">
-<h3 class="anchored" data-anchor-id="motivation">Motivation</h3>
-<p>To improve transparency and interpretability, the system optionally generates natural-language explanations describing <em>why</em> a destination was retrieved for a given query.</p>
+<p>To improve transparency, the system can optionally generate a short natural-language explanation for each of the top 3 results. A prompt containing the user query and the retrieved post’s full text is sent to DeepSeek-V3 via the Hugging Face Inference API, which returns a concise explanation referencing the destination. If the call fails, the API returns a placeholder (“Explanation unavailable.”) rather than failing the whole request.</p>
 <hr>
-</section>
-<section id="explanation-generation" class="level3">
-<h3 class="anchored" data-anchor-id="explanation-generation">Explanation Generation</h3>
-<p>For the top semantic results:</p>
-<ol type="1">
-<li>A prompt is constructed containing:
-<ul>
-<li>The user query</li>
-<li>The full text of the retrieved blog post</li>
-</ul></li>
-<li>The prompt is sent to a hosted large language model via the HuggingFace Inference API</li>
-<li>The model generates a concise explanation describing the relevance of the destination</li>
-</ol>
-<p>The explanation is constrained to a small number of sentences and explicitly references the destination name.</p>
-<hr>
-</section>
 </section>
 <section id="unified-api-design" class="level2">
 <h2 class="anchored" data-anchor-id="unified-api-design">Unified API Design</h2>
-<p>Both BM25 and ModernBERT retrieval methods are exposed through a single <code>/search</code> endpoint. The retrieval strategy is selected via a simple configuration flag in the request payload.</p>
-<p>This design allows:</p>
-<ul>
-<li>Direct comparison between lexical and semantic retrieval</li>
-<li>Easy experimentation with hybrid or re-ranking approaches</li>
-<li>Extensibility for future retrieval models</li>
-</ul>
+<p>Both BM25 and FAISS retrieval are exposed through a single <code>/search</code> endpoint; the retrieval strategy and explanation toggle are set via fields in the request payload. This allows direct comparison between lexical and semantic retrieval and leaves room for future hybrid or re-ranking approaches.</p>
 <hr>
 </section>
 <section id="summary" class="level2">
 <h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<p>The methods combine:</p>
 <ul>
-<li><strong>BM25</strong> for fast, interpretable keyword-based search</li>
-<li><strong>ModernBERT + FAISS</strong> for context-aware semantic retrieval</li>
-<li><strong>LLM-based explanations</strong> for human-readable interpretability</li>
+<li><strong>BM25</strong>: fast, interpretable keyword-based search over an RDS-backed corpus</li>
+<li><strong>ModernBERT + FAISS</strong>: context-aware semantic retrieval over S3-backed embeddings</li>
+<li><strong>LLM explanations</strong>: human-readable interpretability via DeepSeek-V3</li>
 </ul>
-<p>Together, these components form a flexible and extensible search system tailored to exploratory, off-the-beaten-path travel discovery.</p>
+<p>Together, these components form a flexible, extensible search system for exploratory, off-the-beaten-path travel discovery.</p>
 
 
 </section>

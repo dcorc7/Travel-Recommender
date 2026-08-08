@@ -144,6 +144,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#lexical-retrieval-bm25" id="toc-lexical-retrieval-bm25" class="nav-link" data-scroll-target="#lexical-retrieval-bm25">Lexical Retrieval (BM25)</a></li>
   <li><a href="#semantic-retrieval-modernbert-faiss" id="toc-semantic-retrieval-modernbert-faiss" class="nav-link" data-scroll-target="#semantic-retrieval-modernbert-faiss">Semantic Retrieval (ModernBERT + FAISS)</a></li>
   <li><a href="#api-layer" id="toc-api-layer" class="nav-link" data-scroll-target="#api-layer">API Layer</a></li>
+  <li><a href="#data-hosting" id="toc-data-hosting" class="nav-link" data-scroll-target="#data-hosting">Data &amp; Hosting</a></li>
   </ul></li>
   <li><a href="#use-cases" id="toc-use-cases" class="nav-link" data-scroll-target="#use-cases">Use Cases</a></li>
   <li><a href="#github-repository" id="toc-github-repository" class="nav-link" data-scroll-target="#github-repository">Github Repository</a></li>
@@ -198,20 +199,16 @@ Warning
 <h1>Introduction</h1>
 <p>Popular travel platforms often optimize for popularity, reinforcing the same well-known destinations and experiences. This project takes a different approach.</p>
 <p>The Off-the-Beaten-Path Travel Recommender is a semantic search and retrieval system designed to surface <em>less-crowded, locally authentic, and contextually relevant</em> travel destinations by learning directly from long-form travel blog content. Instead of relying on predefined destination rankings or user reviews, the system analyzes narrative travel writing to identify places that align with exploratory, low-tourism intent.</p>
-<p>At its core, the project combines traditional information retrieval with modern transformer-based semantic search, exposed through a lightweight API for interactive exploration.</p>
+<p>The project combines traditional information retrieval with modern transformer-based semantic search, exposed through a lightweight API for interactive exploration.</p>
 <hr>
 </section>
 <section id="what-this-system-does" class="level1">
 <h1>What This System Does</h1>
 <ul>
-<li>Searches thousands of travel blog posts describing destinations around the world<br>
-</li>
-<li>Supports both keyword-based and semantic search modes<br>
-</li>
-<li>Captures nuanced intent such as <em>quiet</em>, <em>local</em>, <em>hidden</em>, or <em>underrated</em><br>
-</li>
-<li>Returns destination-level results with geographic metadata and source context<br>
-</li>
+<li>Searches thousands of travel blog posts describing destinations around the world</li>
+<li>Supports both keyword-based and semantic search modes</li>
+<li>Captures nuanced intent such as <em>quiet</em>, <em>local</em>, <em>hidden</em>, or <em>underrated</em></li>
+<li>Returns destination-level results with geographic metadata and source context</li>
 <li>Generates natural-language explanations for why results match a query</li>
 </ul>
 <p>The system is designed to be modular, interpretable, and extensible—making it suitable for research, experimentation, or deployment as a discovery-focused travel tool.</p>
@@ -230,18 +227,19 @@ Warning
 <section id="api-layer" class="level3">
 <h3 class="anchored" data-anchor-id="api-layer">API Layer</h3>
 <p>A FastAPI backend exposes a unified <code>/search</code> endpoint, allowing clients to switch between retrieval models with a simple configuration flag. The API returns structured results, excerpts, and optional LLM-generated explanations.</p>
+</section>
+<section id="data-hosting" class="level3">
+<h3 class="anchored" data-anchor-id="data-hosting">Data &amp; Hosting</h3>
+<p>Blog metadata lives in an AWS RDS PostgreSQL database, and precomputed ModernBERT embeddings are stored in an AWS S3 bucket and loaded into a FAISS index at API startup. The Streamlit frontend and FastAPI backend are each deployed as their own Hugging Face Space.</p>
 <hr>
 </section>
 </section>
 <section id="use-cases" class="level1">
 <h1>Use Cases</h1>
 <ul>
-<li>Discovering lesser-known destinations aligned with personal travel style<br>
-</li>
-<li>Comparing lexical vs semantic retrieval behavior<br>
-</li>
-<li>Experimenting with modern NLP techniques in a real-world domain<br>
-</li>
+<li>Discovering lesser-known destinations aligned with personal travel style</li>
+<li>Comparing lexical vs semantic retrieval behavior</li>
+<li>Experimenting with modern NLP techniques in a real-world domain</li>
 <li>Serving as a foundation for future recommendation or personalization systems</li>
 </ul>
 <hr>
